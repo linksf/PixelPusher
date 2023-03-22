@@ -3,8 +3,10 @@ import './App.css';
 import Grid from './components/Grid';
 import PaletteColor from './components/PaletteColor';
 import styled from 'styled-components';
-import HUD from './components/HUD';
-import BrushSizeChanger from './components/BrushSizeChanger';
+import ColorHud from './components/ColorHud';
+import ToolHud from './components/ToolHud';
+import TitleHud from './components/TitleHud';
+import FrameHud from './components/FrameHud';
 
 const { StateContext } = require('./context/StateContext');
 
@@ -27,18 +29,20 @@ const PaletteLable = styled.h3`
   width: 100%;
 `
 const Section = styled.div`
-width: 100vw;
+width: 100%;
 display: flex;
 flex-direction: column;
 justify-content: center;
 align-items: center;
 background-color: ${props => props.bgColor};
+grid-column: 1/2;
 `
 const Wrapper = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
+  display: grid;
+grid-align: center;
+grid-template-columns: 1fr;
+grid-template-rows: 50px 50px 1fr 50px auto;
+width: 100vw;
 `
 
 function App() {
@@ -72,6 +76,7 @@ const {
     newFrames.push(new Array(width * height).fill(0));
     const newCurrentFrame = newFrames.length - 1;
     setFrames(newFrames);
+    setCurrentFrameIndex(newCurrentFrame);
   }
 
   const handlePaletteColorChange = (e) => {
@@ -87,14 +92,21 @@ const {
 
   return (
     <Wrapper className="App">
-      <Section bgColor="#232323">
-        <HUD/>      </Section>
-      <Section bgColor="#ecf0f1">
+      <Section bgColor="#232323" gridColumn="1/4">
+        <TitleHud/>
+      </Section>
+      <Section bgColor="#232323" gridColumn="1/2">
+        <ToolHud/>      
+      </Section>
+      <Section bgColor="#ecf0f1" gridColumn="2/3">
         <Grid />
       </Section>
-      <Section bgColor="#ecf0f1">
-        <BrushSizeChanger />
+      <Section bgColor="#232323" gridColumn="3/4">
+        <ColorHud/>      
       </Section>
+      <Section bgColor="#232323" gridColumn="1/4">
+      <FrameHud/>
+        </Section>
     </Wrapper>
   );
 }

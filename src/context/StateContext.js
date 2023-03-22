@@ -18,7 +18,7 @@ export default function StateProvider({ children }) {
     const [frames, setFrames] = useState([new Array(config.width * config.height).fill(0)])
     const [currentFrameIndex, setCurrentFrameIndex] = useState(0)
     const [brushSize, setBrushSize] = useState(2);
-
+    const [showPreviousFrame, setShowPreviousFrame] = useState(true);
     const value = {
         toolActive, setToolActive,
         tool, setTool,
@@ -26,7 +26,7 @@ export default function StateProvider({ children }) {
         palette, setPalette,
         frames, setFrames,
         currentFrameIndex, setCurrentFrameIndex, config,
-        brushSize, setBrushSize
+        brushSize, setBrushSize, showPreviousFrame, setShowPreviousFrame
     }
 
     return (
