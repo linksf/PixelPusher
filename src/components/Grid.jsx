@@ -3,6 +3,7 @@ import { StateContext } from "../context/StateContext";
 import styled from "styled-components";
 
 const Canvas = styled.canvas`
+  touch-action: none;
   cursor: crosshair;
   outline: thick solid #000000;
   z-index: 2;
@@ -223,7 +224,6 @@ const Grid = (props) => {
   };
 
   const touchStart = (e) => {
-    e.preventDefault();
     setToolActive(true);
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
@@ -242,6 +242,7 @@ const Grid = (props) => {
 
   const touchMove = (e) => {
     e.preventDefault();
+    e.stopPropagation();
     if (toolActive) {
       const canvas = canvasRef.current;
       const rect = canvas.getBoundingClientRect();
