@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { StateContext } from "../context/StateContext";
+import styled from "styled-components";
 
+const Canvas = styled.canvas`
+  cursor: crosshair;
+  outline: thick solid #000000;
+  z-index: 2;
+`;
 // class Pixel{
 //     constructor(col, row, colorIndex, scale=20){
 //         this.col = col
@@ -216,6 +222,48 @@ const Grid = (props) => {
     context.strokeRect(col * scale, row * scale, scale, scale);
   };
 
+  const touchStart = (e) => {
+    e.preventDefault();
+    setToolActive(true);
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const col = Math.floor((e.touches[0].clientX - rect.left) / scale);
+    const row = Math.floor((e.touches[0].clientY - rect.top) / scale);
+    if (tool === "draw" || tool === "erase") {
+      draw(col, row);
+    } else if (tool === "fill") {
+      const targetColor =
+        frames[currentFrameIndex][getIndexFromColRow(col, row)];
+      fill(targetColor, col, row);
+    } else if (tool === "eyedropper") {
+      eyeDropper(col, row);
+    }
+  };
+
+  const touchMove = (e) => {
+    e.preventDefault();
+    if (toolActive) {
+      const canvas = canvasRef.current;
+      const rect = canvas.getBoundingClientRect();
+      const col = Math.floor((e.touches[0].clientX - rect.left) / scale);
+      const row = Math.floor((e.touches[0].clientY - rect.top) / scale);
+      if (tool === "draw" || tool === "erase") {
+        draw(col, row);
+      } else if (tool === "fill") {
+        const targetColor =
+          frames[currentFrameIndex][getIndexFromColRow(col, row)];
+        fill(targetColor, col, row);
+      } else if (tool === "eyedropper") {
+        eyeDropper(col, row);
+      }
+    }
+  };
+
+  const touchEnd = (e) => {
+    e.preventDefault();
+    setToolActive(false);
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
@@ -259,17 +307,29 @@ const Grid = (props) => {
       context.fillRect(col * scale, row * scale, scale, scale);
       context.strokeStyle = "#000000";
       context.strokeRect(col * scale, row * scale, scale, scale);
+      for (let i = 0; i < width; i += 4) {
+        context.strokeStyle = "#000000";
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(i * scale, 0);
+        context.lineTo(i * scale, height * scale);
+        context.stroke();
+        context.beginPath();
+        context.moveTo(0, i * scale);
+        context.lineTo(width * scale, i * scale);
+        context.stroke();
+
+        context.strokeRect(0, 0, width * scale, height * scale);
+        context.lineWidth = 1;
+      }
     }
   }, [currentFrameIndex, frames, palette, scale]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
-    setCtx(context);
-  }, []);
-
   return (
-    <canvas
+    <Canvas
+      onTouchStart={touchStart}
+      onTouchMove={touchMove}
+      onTouchEnd={touchEnd}
       onMouseDown={mouseDown}
       onMouseOut={mouseOut}
       onMouseUp={mouseUp}
@@ -278,7 +338,7 @@ const Grid = (props) => {
       width={width * scale}
       height={height * scale}
       id="canvas"
-    ></canvas>
+    ></Canvas>
   );
 };
 export default Grid;

@@ -4,7 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { StateContext } from "../context/StateContext";
 const ToolIcon = styled(FontAwesomeIcon)`
   font-size: 25px;
-  filter: drop-shadow(0 0 1px #000);
+  filter: drop-shadow(0 0 2px #000);
   transition: all 200ms ease;
   cursor: pointer;
   color: ${(props) =>

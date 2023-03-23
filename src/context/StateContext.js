@@ -12,9 +12,9 @@ export default function StateProvider({ children }) {
     }
     const [toolActive, setToolActive] = useState(false)
     const [tool, setTool] = useState("draw")
-    const [currentColorIndex, setCurrentColorIndex] = useState(0)
-    const [palette, setPalette] = useState(["#aaaaaa", "#FFFFFF", "#FF0000",
-        "#00FF00", "#0000FF"])
+    const [currentColorIndex, setCurrentColorIndex] = useState(1)
+    const [palette, setPalette] = useState(["#aaaaaa","#F19548", "#5ABC45", "#524FE4",
+        "#000000", "#FFFFFF"])
     const [frames, setFrames] = useState([new Array(config.width * config.height).fill(0)])
     const [currentFrameIndex, setCurrentFrameIndex] = useState(0)
     const [brushSize, setBrushSize] = useState(2);

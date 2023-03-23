@@ -6,19 +6,20 @@ import { StateContext } from "../context/StateContext";
 
 const HudWrapper = styled.div`
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(7, 1fr);
   align-items: center;
   justify-content: center;
   width: 100%;
   box-sizing: border-box;
+  place-items: center;
 `;
 
 const Frame = styled.div`
-  width: 75px;
-  height: 75px;
+  width: 50px;
+  height: 50px;
   margin: 5px;
   padding: 0;
-  border-radius: 25px;
+  border-radius: 10px;
   display: grid;
   place-items: center;
   border: 1px solid black;
@@ -37,7 +38,10 @@ const FrameNumber = styled.p`
 const Icon = styled(FontAwesomeIcon)`
   font-size: 45px;
   color: #ecf0f1;
-  justify-self: flex-end;
+  grid-column: -1;
+  margin: 5px;
+  grid-row: 1;
+  //justify-self: flex-end;
 `;
 
 const FrameHud = () => {

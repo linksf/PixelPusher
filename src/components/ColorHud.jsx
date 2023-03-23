@@ -49,9 +49,11 @@ const ColorHud = ({
 
   return (
     <HudWrapper bgColor="#ffffff">
-      {palette.map((color, index) => (
-        <PaletteColor key={index} color={color} index={index + 1} />
-      ))}
+      {palette.map((color, index) =>
+        index > 4 ? null : (
+          <PaletteColor key={index} color={color} index={index + 1} />
+        )
+      )}
       <ColorPicker color={palette[currentColorIndex]} />
     </HudWrapper>
   );

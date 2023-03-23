@@ -37,65 +37,42 @@ align-items: center;
 background-color: ${props => props.bgColor};
 grid-column: 1/2;
 `
+const AppWrapper = styled.div`
+width: 100vw;
+height: 100vh;
+display: grid;
+place-items: center;
+`
 const Wrapper = styled.div`
   display: grid;
-grid-align: center;
 grid-template-columns: 1fr;
 grid-template-rows: 50px 50px 1fr 50px auto;
-width: 100vw;
+width: ${props => props.width}px;
+
 `
 
 function App() {
-  const width = 24
-  const height = 24
 const {
         toolActive, setToolActive,
         tool, setTool,
         currentColorIndex, setCurrentColorIndex,
         palette, setPalette,
         frames, setFrames,
-        currentFrameIndex, setCurrentFrameIndex
+        currentFrameIndex, setCurrentFrameIndex, config
     } = useContext(StateContext)
 
-  const changeTool = (toolName) => {
-    setTool(toolName)
-  }
+const {width, height, scale} = config
 
-  const saveFrame = (frame, index) => {
-    const newFrames = [...frames];
-    newFrames[index] = frame;
-  setFrames(newFrames);  
-  }
-
-  const activate = () => {
-   setToolActive(true)
-  }
-
-  const addFrame = () => {
-    const newFrames = [...frames];
-    newFrames.push(new Array(width * height).fill(0));
-    const newCurrentFrame = newFrames.length - 1;
-    setFrames(newFrames);
-    setCurrentFrameIndex(newCurrentFrame);
-  }
-
-  const handlePaletteColorChange = (e) => {
-    const color = e.target.value;
-    const newPalette = [...palette];
-    newPalette[currentColorIndex] = color;
-    setPalette(newPalette);
-  }
-
-  const handleCurrentColorChange = (index) => {
-    setCurrentColorIndex(index )
-  }
 
   return (
-    <Wrapper className="App">
+    <AppWrapper>
+    <Wrapper 
+    width={width * scale + 10}
+    className="App">
       <Section bgColor="#232323" gridColumn="1/4">
         <TitleHud/>
       </Section>
-      <Section bgColor="#232323" gridColumn="1/2">
+      <Section bgColor="ecf0f1" gridColumn="1/2">
         <ToolHud/>      
       </Section>
       <Section bgColor="#ecf0f1" gridColumn="2/3">
@@ -108,6 +85,7 @@ const {
       <FrameHud/>
         </Section>
     </Wrapper>
+      </AppWrapper>
   );
 }
 
