@@ -17,8 +17,7 @@ const Icon = styled(FontAwesomeIcon)`
   padding: 5px;
   cursor: pointer;
   position: relative;
-  color: #ecf0f1;
-  filter: drop-shadow(0 0 1px #000);
+  color: #6c8b93;
 `;
 const Lable = styled.label`
   color: #ecf0f1;

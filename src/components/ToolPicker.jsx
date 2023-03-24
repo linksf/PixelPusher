@@ -4,14 +4,13 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { StateContext } from "../context/StateContext";
 const ToolIcon = styled(FontAwesomeIcon)`
   font-size: 25px;
-  filter: drop-shadow(0 0 2px #000);
   transition: all 200ms ease;
   cursor: pointer;
   color: ${(props) =>
-    props.isactive ? props.palette[props.index] : "#ecf0f1"};
+    props.isactive ? props.palette[props.index] : "#6c8b93"};
   padding: 10px;
   &:hover {
-    transform: rotate(20deg);
+    transform: rotate(-45deg);
   }
 `;
 

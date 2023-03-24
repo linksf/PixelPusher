@@ -79,25 +79,6 @@ const Grid = (props) => {
       context.strokeRect(col * scale, row * scale, scale, scale);
     }
   };
-
-  const mouseDown = (e) => {
-    setToolActive(true);
-    const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
-    const rect = canvas.getBoundingClientRect();
-    const col = Math.floor((e.clientX - rect.left) / scale);
-    const row = Math.floor((e.clientY - rect.top) / scale);
-    if (tool === "draw" || tool === "erase") {
-      draw(col, row);
-    } else if (tool === "fill") {
-      const targetColor =
-        frames[currentFrameIndex][getIndexFromColRow(col, row)];
-      fill(targetColor, col, row, [...frames[currentFrameIndex]]);
-    } else if (tool === "eyeDropper") {
-      eyeDropper(col, row);
-    }
-  };
-
   const draw = (col, row) => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
@@ -110,14 +91,14 @@ const Grid = (props) => {
           tool === "draw"
             ? currentColorIndex
             : tool === "erase"
-            ? 0
+            ? -1
             : tempFrame[pixelIndex];
       }
     }
     const tempFrames = [...frames];
     tempFrames[currentFrameIndex] = tempFrame;
     setFrames(tempFrames);
-    printPixels();
+    //printPixels();
     // context.fillStyle = palette[currentColorIndex];
     // context.fillRect(col * scale, row * scale, scale, scale);
     // context.strokeStyle = "#000000";
@@ -127,12 +108,8 @@ const Grid = (props) => {
   const fill = (targetColor, col, row, tempFrame, indexes) => {
     if (targetColor === currentColorIndex) return;
     if (indexes === undefined) indexes = new Set();
+    if (tempFrame === undefined) tempFrame = [...frames[currentFrameIndex]];
     if (indexes.has(getIndexFromColRow(col, row))) return;
-    console.log(
-      `filling ${targetColor} at ${col}, ${row} with indexes ${Array.from(
-        indexes.values()
-      )}`
-    );
     const orthos = [
       [0, 1],
       [0, -1],
@@ -168,27 +145,46 @@ const Grid = (props) => {
     tempFrames[currentFrameIndex] = tempFrame;
     setFrames(tempFrames);
   };
+
+  const mouseDown = (e) => {
+    setToolActive(true);
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    const rect = canvas.getBoundingClientRect();
+    const col = Math.floor((e.clientX - rect.left) / scale);
+    const row = Math.floor((e.clientY - rect.top) / scale);
+    inputDown(col, row);
+  };
+
   const mouseUp = (e) => {
     setToolActive(false);
   };
 
   const mouseMove = (e) => {
+    printFrame();
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const col = Math.min(
+      width,
+      Math.max(0, Math.floor((e.clientX - rect.left) / scale))
+    );
+    const row = Math.min(
+      height,
+      Math.max(0, Math.floor((e.clientY - rect.top) / scale))
+    );
     if (toolActive) {
-      const canvas = canvasRef.current;
-      const rect = canvas.getBoundingClientRect();
-      const col = Math.min(
-        width,
-        Math.max(0, Math.floor((e.clientX - rect.left) / scale))
-      );
-      const row = Math.min(
-        height,
-        Math.max(0, Math.floor((e.clientY - rect.top) / scale))
-      );
-      if (tool === "draw") {
+      if (tool === "draw" || tool === "erase") {
         draw(col, row);
-      } else if (tool === "erase") {
-        erase(col, row);
       }
+    } else if (tool === "draw" || tool === "erase") {
+      const context = canvas.getContext("2d");
+      context.strokeStyle = palette[currentColorIndex];
+      context.strokeRect(
+        col * scale,
+        row * scale,
+        brushSize * scale,
+        brushSize * scale
+      );
     }
   };
 
@@ -223,12 +219,7 @@ const Grid = (props) => {
     context.strokeRect(col * scale, row * scale, scale, scale);
   };
 
-  const touchStart = (e) => {
-    setToolActive(true);
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const col = Math.floor((e.touches[0].clientX - rect.left) / scale);
-    const row = Math.floor((e.touches[0].clientY - rect.top) / scale);
+  const inputDown = (col, row) => {
     if (tool === "draw" || tool === "erase") {
       draw(col, row);
     } else if (tool === "fill") {
@@ -240,9 +231,19 @@ const Grid = (props) => {
     }
   };
 
+  const touchStart = (e) => {
+    setToolActive(true);
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const col = Math.floor((e.touches[0].clientX - rect.left) / scale);
+    const row = Math.floor((e.touches[0].clientY - rect.top) / scale);
+    inputDown(col, row);
+  };
+
   const touchMove = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    printFrame();
     if (toolActive) {
       const canvas = canvasRef.current;
       const rect = canvas.getBoundingClientRect();
@@ -265,7 +266,7 @@ const Grid = (props) => {
     setToolActive(false);
   };
 
-  useEffect(() => {
+  const printFrame = () => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -276,22 +277,10 @@ const Grid = (props) => {
     }
     for (let i = 0; i < frame.length; i++) {
       const { col, row } = getColRowFromIndex(i);
-      //     context.fillStyle =
-      //       prevFrame[i] !== 0
-      //         ? palette[prevFrame[i]] + "55"
-      //         : col % 2 === 0
-      //         ? row % 2 === 0
-      //           ? "#aaa"
-      //           : "#ccc"
-      //         : row % 2 === 0
-      //         ? "#ccc"
-      //         : "#aaa";
-      //     context.fillRect(col * scale, row * scale, scale, scale);
-      //   }
       let fillColor;
-      if (frame[i] !== 0) {
+      if (frame[i] >= 0) {
         fillColor = palette[frame[i]];
-      } else if (prevFrame && prevFrame[i] !== 0) {
+      } else if (prevFrame && prevFrame[i] >= 0) {
         fillColor = palette[prevFrame[i]] + "55";
       } else {
         fillColor =
@@ -319,11 +308,14 @@ const Grid = (props) => {
         context.moveTo(0, i * scale);
         context.lineTo(width * scale, i * scale);
         context.stroke();
-
         context.strokeRect(0, 0, width * scale, height * scale);
         context.lineWidth = 1;
       }
     }
+  };
+
+  useEffect(() => {
+    printFrame();
   }, [currentFrameIndex, frames, palette, scale]);
 
   return (

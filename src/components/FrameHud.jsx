@@ -59,7 +59,7 @@ const FrameHud = () => {
 
   const addFrame = () => {
     const newFrames = [...frames];
-    newFrames.push(new Array(config.width * config.height).fill(0));
+    newFrames.push(new Array(config.width * config.height).fill(-1));
     setFrames(newFrames);
     setCurrentFrameIndex(newFrames.length - 1);
   };
