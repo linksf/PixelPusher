@@ -58,6 +58,7 @@ const FrameHud = () => {
   };
 
   const addFrame = () => {
+    console.log(JSON.stringify(frames));
     const newFrames = [...frames];
     newFrames.push(new Array(config.width * config.height).fill(-1));
     setFrames(newFrames);

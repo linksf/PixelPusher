@@ -1,4 +1,4 @@
-import {useState, useContext} from 'react';
+import {useState, useContext, useEffect} from 'react';
 import './App.css';
 import Grid from './components/Grid';
 import PaletteColor from './components/PaletteColor';
@@ -40,16 +40,19 @@ grid-column: 1/2;
 const AppWrapper = styled.div`
 width: 100vw;
 height: 100vh;
-display: grid;
-place-items: center;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: flex-start;
 `
 const Wrapper = styled.div`
   display: grid;
-grid-template-columns: 1fr;
-grid-template-rows: 50px 50px 1fr 50px auto;
-width: ${props => props.width}px;
-
+  grid-template-columns: 1fr;
+  grid-template-rows: 50px 50px 1fr 50px auto;
+  width: 100%;
 `
+// width: ${props => props.width}px;
+
 
 function App() {
 const {
@@ -58,11 +61,14 @@ const {
         currentColorIndex, setCurrentColorIndex,
         palette, setPalette,
         frames, setFrames,
-        currentFrameIndex, setCurrentFrameIndex, config
+        currentFrameIndex, setCurrentFrameIndex, config, setConfig, setScaleMod, scaleMod
     } = useContext(StateContext)
 
 const {width, height, scale} = config
-
+useEffect(()=> {
+  const newScale = window.innerWidth < 480 ? 15 : 20
+  setConfig({...config, scale: newScale })
+}, [])
 
   return (
     <AppWrapper>
@@ -83,6 +89,9 @@ const {width, height, scale} = config
       </Section>
       <Section bgColor="#232323" gridColumn="1/4">
       <FrameHud/>
+        </Section>
+        <Section bgColor="#ecf0f1" gridColumn="1/2">
+          <input type="range" min="0" max="10" step="1" value={scaleMod} onChange={(e) => {setScaleMod(+e.target.value)}}/>
         </Section>
     </Wrapper>
       </AppWrapper>

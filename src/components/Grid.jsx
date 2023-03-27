@@ -37,6 +37,11 @@ const Grid = (props) => {
     setBrushSize,
     showPreviousFrame,
     setShowPreviousFrame,
+    scaleMod,
+    undoData,
+    setUndoData,
+    undoAvailable,
+    setUndoAvailable,
   } = useContext(StateContext);
   const { width, height, scale } = config;
   const [pixels, setPixels] = useState(Array(width * height).fill(0));
@@ -74,11 +79,22 @@ const Grid = (props) => {
           : row % 2 === 0
           ? "#ccc"
           : "#aaa";
-      context.fillRect(col * scale, row * scale, scale, scale);
+      context.fillRect(
+        col * (scale + scaleMod),
+        row * (scale + scaleMod),
+        scale + scaleMod,
+        scale + scaleMod
+      );
       context.strokeStyle = "#000000";
-      context.strokeRect(col * scale, row * scale, scale, scale);
+      context.strokeRect(
+        col * (scale + scaleMod),
+        row * (scale + scaleMod),
+        scale + scaleMod,
+        scale + scaleMod
+      );
     }
   };
+
   const draw = (col, row) => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
@@ -147,12 +163,13 @@ const Grid = (props) => {
   };
 
   const mouseDown = (e) => {
+    saveDataForUndo();
     setToolActive(true);
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     const rect = canvas.getBoundingClientRect();
-    const col = Math.floor((e.clientX - rect.left) / scale);
-    const row = Math.floor((e.clientY - rect.top) / scale);
+    const col = Math.floor((e.clientX - rect.left) / (scale + scaleMod));
+    const row = Math.floor((e.clientY - rect.top) / (scale + scaleMod));
     inputDown(col, row);
   };
 
@@ -161,16 +178,15 @@ const Grid = (props) => {
   };
 
   const mouseMove = (e) => {
-    printFrame();
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const col = Math.min(
       width,
-      Math.max(0, Math.floor((e.clientX - rect.left) / scale))
+      Math.max(0, Math.floor((e.clientX - rect.left) / (scale + scaleMod)))
     );
     const row = Math.min(
       height,
-      Math.max(0, Math.floor((e.clientY - rect.top) / scale))
+      Math.max(0, Math.floor((e.clientY - rect.top) / (scale + scaleMod)))
     );
     if (toolActive) {
       if (tool === "draw" || tool === "erase") {
@@ -180,12 +196,13 @@ const Grid = (props) => {
       const context = canvas.getContext("2d");
       context.strokeStyle = palette[currentColorIndex];
       context.strokeRect(
-        col * scale,
-        row * scale,
-        brushSize * scale,
-        brushSize * scale
+        col * (scale + scaleMod),
+        row * (scale + scaleMod),
+        brushSize * (scale + scaleMod),
+        brushSize * (scale + scaleMod)
       );
     }
+    // printFrame();
   };
 
   const eyeDropper = (col, row) => {
@@ -214,9 +231,19 @@ const Grid = (props) => {
         : row % 2 === 0
         ? "#ccc"
         : "#aaa";
-    context.fillRect(col * scale, row * scale, scale, scale);
+    context.fillRect(
+      col * (scale + scaleMod),
+      row * (scale + scaleMod),
+      scale + scaleMod,
+      scale + scaleMod
+    );
     context.strokeStyle = "#000000";
-    context.strokeRect(col * scale, row * scale, scale, scale);
+    context.strokeRect(
+      col * (scale + scaleMod),
+      row * (scale + scaleMod),
+      scale + scaleMod,
+      scale + scaleMod
+    );
   };
 
   const inputDown = (col, row) => {
@@ -232,38 +259,63 @@ const Grid = (props) => {
   };
 
   const touchStart = (e) => {
+    saveDataForUndo();
     setToolActive(true);
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
-    const col = Math.floor((e.touches[0].clientX - rect.left) / scale);
-    const row = Math.floor((e.touches[0].clientY - rect.top) / scale);
+    const col = Math.floor(
+      (e.touches[0].clientX - rect.left) / (scale + scaleMod)
+    );
+    const row = Math.floor(
+      (e.touches[0].clientY - rect.top) / (scale + scaleMod)
+    );
     inputDown(col, row);
   };
 
   const touchMove = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    printFrame();
+    // e.stopPropagation();
     if (toolActive) {
       const canvas = canvasRef.current;
       const rect = canvas.getBoundingClientRect();
-      const col = Math.floor((e.touches[0].clientX - rect.left) / scale);
-      const row = Math.floor((e.touches[0].clientY - rect.top) / scale);
+      const col = Math.floor(
+        (e.touches[0].clientX - rect.left) / (scale + scaleMod)
+      );
+      const row = Math.floor(
+        (e.touches[0].clientY - rect.top) / (scale + scaleMod)
+      );
+      console.log(col, row);
       if (tool === "draw" || tool === "erase") {
         draw(col, row);
-      } else if (tool === "fill") {
-        const targetColor =
-          frames[currentFrameIndex][getIndexFromColRow(col, row)];
-        fill(targetColor, col, row);
-      } else if (tool === "eyedropper") {
-        eyeDropper(col, row);
       }
+      // else if (tool === "fill") {
+      //   const targetColor =
+      //     frames[currentFrameIndex][getIndexFromColRow(col, row)];
+      //   fill(targetColor, col, row);
+      // } else if (tool === "eyedropper") {
+      //   eyeDropper(col, row);
+      // }
     }
+    // printFrame();
   };
 
   const touchEnd = (e) => {
     e.preventDefault();
     setToolActive(false);
+  };
+
+  const saveDataForUndo = () => {
+    const tempUndoAvailable = [...undoAvailable];
+    tempUndoAvailable[currentFrameIndex] = true;
+    setUndoAvailable(tempUndoAvailable);
+    if (undoData.length === 0) {
+      for (let i = 0; i < frames.length; i++) {
+        undoData.push([...frames[i]]);
+      }
+    }
+    const tempData = [...undoData];
+    const tempFrame = [...frames[currentFrameIndex]];
+    tempData[currentFrameIndex] = tempFrame;
+    setUndoData(tempData);
   };
 
   const printFrame = () => {
@@ -294,21 +346,36 @@ const Grid = (props) => {
       }
 
       context.fillStyle = fillColor;
-      context.fillRect(col * scale, row * scale, scale, scale);
+      context.fillRect(
+        col * (scale + scaleMod),
+        row * (scale + scaleMod),
+        scale + scaleMod,
+        scale + scaleMod
+      );
       context.strokeStyle = "#000000";
-      context.strokeRect(col * scale, row * scale, scale, scale);
+      context.strokeRect(
+        col * (scale + scaleMod),
+        row * (scale + scaleMod),
+        scale + scaleMod,
+        scale + scaleMod
+      );
       for (let i = 0; i < width; i += 4) {
         context.strokeStyle = "#000000";
         context.lineWidth = 2;
         context.beginPath();
-        context.moveTo(i * scale, 0);
-        context.lineTo(i * scale, height * scale);
+        context.moveTo(i * (scale + scaleMod), 0);
+        context.lineTo(i * (scale + scaleMod), height * (scale + scaleMod));
         context.stroke();
         context.beginPath();
-        context.moveTo(0, i * scale);
-        context.lineTo(width * scale, i * scale);
+        context.moveTo(0, i * (scale + scaleMod));
+        context.lineTo(width * (scale + scaleMod), i * (scale + scaleMod));
         context.stroke();
-        context.strokeRect(0, 0, width * scale, height * scale);
+        context.strokeRect(
+          0,
+          0,
+          width * (scale + scaleMod),
+          height * (scale + scaleMod)
+        );
         context.lineWidth = 1;
       }
     }
@@ -328,8 +395,8 @@ const Grid = (props) => {
       onMouseUp={mouseUp}
       onMouseMove={mouseMove}
       ref={canvasRef}
-      width={width * scale}
-      height={height * scale}
+      width={width * (scale + scaleMod)}
+      height={height * (scale + scaleMod)}
       id="canvas"
     ></Canvas>
   );

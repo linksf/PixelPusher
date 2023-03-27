@@ -13,6 +13,7 @@ export default function StateProvider({ children }) {
         height: 24,
         scale: 20
     })
+    const [scaleMod, setScaleMod] = useState(0)
     const [toolActive, setToolActive] = useState(false)
     const [tool, setTool] = useState("draw")
     const [currentColorIndex, setCurrentColorIndex] = useState(0)
@@ -21,6 +22,8 @@ export default function StateProvider({ children }) {
     const [currentFrameIndex, setCurrentFrameIndex] = useState(0)
     const [brushSize, setBrushSize] = useState(1);
     const [showPreviousFrame, setShowPreviousFrame] = useState(true);
+    const [undoData, setUndoData] = useState([])
+    const [undoAvailable, setUndoAvailable] = useState([false])
     const value = {
         toolActive, setToolActive,
         tool, setTool,
@@ -28,7 +31,7 @@ export default function StateProvider({ children }) {
         palette, setPalette,
         frames, setFrames,
         currentFrameIndex, setCurrentFrameIndex, config,setConfig,
-        brushSize, setBrushSize, showPreviousFrame, setShowPreviousFrame
+        brushSize, setBrushSize, showPreviousFrame, setShowPreviousFrame, scaleMod, setScaleMod, undoData, setUndoData, undoAvailable, setUndoAvailable
     }
 // useEffect(() => {
 //     const handleResize = () => {
