@@ -14,7 +14,7 @@ export default function StateProvider({ children }) {
         scale: 20
     })
     const [scaleMod, setScaleMod] = useState(0)
-    const [toolActive, setToolActive] = useState(false)
+    const [toolActive, setToolActive] = useState(0)
     const [tool, setTool] = useState("draw")
     const [currentColorIndex, setCurrentColorIndex] = useState(0)
     const [palette, setPalette] = useState(["#F19548", "#5ABC45", "#524FE4","#FAD894", "#000000", "#FFFFFF"])
@@ -23,7 +23,9 @@ export default function StateProvider({ children }) {
     const [brushSize, setBrushSize] = useState(1);
     const [showPreviousFrame, setShowPreviousFrame] = useState(true);
     const [undoData, setUndoData] = useState([])
-    const [undoAvailable, setUndoAvailable] = useState([false])
+    const [undoAvailable, setUndoAvailable] = useState([0])
+    const [xOffset, setXOffset] = useState(0)
+    const [yOffset, setYOffset] = useState(0)
     const value = {
         toolActive, setToolActive,
         tool, setTool,
@@ -31,7 +33,7 @@ export default function StateProvider({ children }) {
         palette, setPalette,
         frames, setFrames,
         currentFrameIndex, setCurrentFrameIndex, config,setConfig,
-        brushSize, setBrushSize, showPreviousFrame, setShowPreviousFrame, scaleMod, setScaleMod, undoData, setUndoData, undoAvailable, setUndoAvailable
+        brushSize, setBrushSize, showPreviousFrame, setShowPreviousFrame, scaleMod, setScaleMod, undoData, setUndoData, undoAvailable, setUndoAvailable, xOffset, setXOffset, yOffset, setYOffset
     }
 // useEffect(() => {
 //     const handleResize = () => {

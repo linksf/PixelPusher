@@ -1,12 +1,39 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { StateContext } from "../context/StateContext";
 import styled from "styled-components";
-
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faArrowLeft,
+  faArrowRight,
+  faArrowDown,
+  faArrowUp,
+} from "@fortawesome/free-solid-svg-icons";
 const Canvas = styled.canvas`
   touch-action: none;
   cursor: crosshair;
   outline: thick solid #000000;
   z-index: 2;
+  position: relative;
+`;
+const Wrapper = styled.div`
+  position: relative;
+`;
+const Arrow = styled(FontAwesomeIcon)`
+  font-size: 20px;
+  color: black;
+  background-color: palegreen;
+  border-radius: 50%;
+  border: thin solid #000000;
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  top: ${(props) => props.top};
+  left: ${(props) => props.left};
+  bottom: ${(props) => props.bottom};
+  right: ${(props) => props.right};
+  display: ${(props) => (props.isVisible ? "block" : "none")};
+  cursor: pointer;
+  z-index: 3;
 `;
 // class Pixel{
 //     constructor(col, row, colorIndex, scale=20){
@@ -42,6 +69,10 @@ const Grid = (props) => {
     setUndoData,
     undoAvailable,
     setUndoAvailable,
+    xOffset,
+    setXOffset,
+    yOffset,
+    setYOffset,
   } = useContext(StateContext);
   const { width, height, scale } = config;
   const [pixels, setPixels] = useState(Array(width * height).fill(0));
@@ -80,15 +111,15 @@ const Grid = (props) => {
           ? "#ccc"
           : "#aaa";
       context.fillRect(
-        col * (scale + scaleMod),
-        row * (scale + scaleMod),
+        col * (scale + scaleMod) - xOffset * scale,
+        row * (scale + scaleMod) - yOffset * scale,
         scale + scaleMod,
         scale + scaleMod
       );
       context.strokeStyle = "#000000";
       context.strokeRect(
-        col * (scale + scaleMod),
-        row * (scale + scaleMod),
+        col * (scale + scaleMod) - xOffset * scale,
+        row * (scale + scaleMod) - yOffset * scale,
         scale + scaleMod,
         scale + scaleMod
       );
@@ -178,6 +209,7 @@ const Grid = (props) => {
   };
 
   const mouseMove = (e) => {
+    // printFrame();
     const canvas = canvasRef.current;
     const rect = canvas.getBoundingClientRect();
     const col = Math.min(
@@ -192,17 +224,16 @@ const Grid = (props) => {
       if (tool === "draw" || tool === "erase") {
         draw(col, row);
       }
-    } else if (tool === "draw" || tool === "erase") {
-      const context = canvas.getContext("2d");
-      context.strokeStyle = palette[currentColorIndex];
-      context.strokeRect(
-        col * (scale + scaleMod),
-        row * (scale + scaleMod),
-        brushSize * (scale + scaleMod),
-        brushSize * (scale + scaleMod)
-      );
+      // } else if (tool === "draw" || tool === "erase") {
+      //   const context = canvas.getContext("2d");
+      //   context.strokeStyle = palette[currentColorIndex];
+      //   context.strokeRect(
+      //     col * (scale + scaleMod)+(xOffset*scale),
+      //     row * (scale + scaleMod)+(yOffset*scale),
+      //     brushSize * (scale + scaleMod),
+      //     brushSize * (scale + scaleMod)
+      //   );
     }
-    // printFrame();
   };
 
   const eyeDropper = (col, row) => {
@@ -232,15 +263,15 @@ const Grid = (props) => {
         ? "#ccc"
         : "#aaa";
     context.fillRect(
-      col * (scale + scaleMod),
-      row * (scale + scaleMod),
+      col * (scale + scaleMod) - xOffset * scale,
+      row * (scale + scaleMod) - yOffset * scale,
       scale + scaleMod,
       scale + scaleMod
     );
     context.strokeStyle = "#000000";
     context.strokeRect(
-      col * (scale + scaleMod),
-      row * (scale + scaleMod),
+      col * (scale + scaleMod) - xOffset * scale,
+      row * (scale + scaleMod) - yOffset * scale,
       scale + scaleMod,
       scale + scaleMod
     );
@@ -305,7 +336,7 @@ const Grid = (props) => {
 
   const saveDataForUndo = () => {
     const tempUndoAvailable = [...undoAvailable];
-    tempUndoAvailable[currentFrameIndex] = true;
+    tempUndoAvailable[currentFrameIndex] = 1;
     setUndoAvailable(tempUndoAvailable);
     if (undoData.length === 0) {
       for (let i = 0; i < frames.length; i++) {
@@ -347,15 +378,15 @@ const Grid = (props) => {
 
       context.fillStyle = fillColor;
       context.fillRect(
-        col * (scale + scaleMod),
-        row * (scale + scaleMod),
+        col * (scale + scaleMod) - xOffset * scale,
+        row * (scale + scaleMod) - yOffset * scale,
         scale + scaleMod,
         scale + scaleMod
       );
       context.strokeStyle = "#000000";
       context.strokeRect(
-        col * (scale + scaleMod),
-        row * (scale + scaleMod),
+        col * (scale + scaleMod) - xOffset * scale,
+        row * (scale + scaleMod) - yOffset * scale,
         scale + scaleMod,
         scale + scaleMod
       );
@@ -363,12 +394,18 @@ const Grid = (props) => {
         context.strokeStyle = "#000000";
         context.lineWidth = 2;
         context.beginPath();
-        context.moveTo(i * (scale + scaleMod), 0);
-        context.lineTo(i * (scale + scaleMod), height * (scale + scaleMod));
+        context.moveTo(i * (scale + scaleMod) - xOffset * scale, 0);
+        context.lineTo(
+          i * (scale + scaleMod) - xOffset * scale,
+          height * (scale + scaleMod)
+        );
         context.stroke();
         context.beginPath();
-        context.moveTo(0, i * (scale + scaleMod));
-        context.lineTo(width * (scale + scaleMod), i * (scale + scaleMod));
+        context.moveTo(0, i * (scale + scaleMod) - yOffset * scale);
+        context.lineTo(
+          width * (scale + scaleMod) - yOffset * scale,
+          i * (scale + scaleMod) - yOffset * scale
+        );
         context.stroke();
         context.strokeRect(
           0,
@@ -383,22 +420,66 @@ const Grid = (props) => {
 
   useEffect(() => {
     printFrame();
-  }, [currentFrameIndex, frames, palette, scale]);
+  }, [currentFrameIndex, frames, palette, scale, scaleMod, xOffset, yOffset]);
+
+  const moveUp = (e) => {
+    setYOffset(Math.max(0, yOffset - 1));
+  };
+
+  const moveDown = (e) => {
+    setYOffset(Math.min(height / 2, yOffset + 1));
+  };
+  const moveLeft = (e) => {
+    setXOffset(Math.max(0, xOffset - 1));
+  };
+  const moveRight = (e) => {
+    setXOffset(Math.min(width / 2, xOffset + 1));
+  };
 
   return (
-    <Canvas
-      onTouchStart={touchStart}
-      onTouchMove={touchMove}
-      onTouchEnd={touchEnd}
-      onMouseDown={mouseDown}
-      onMouseOut={mouseOut}
-      onMouseUp={mouseUp}
-      onMouseMove={mouseMove}
-      ref={canvasRef}
-      width={width * (scale + scaleMod)}
-      height={height * (scale + scaleMod)}
-      id="canvas"
-    ></Canvas>
+    <Wrapper>
+      <Arrow
+        icon={faArrowUp}
+        top={"0"}
+        left={"50%"}
+        isVisible={scaleMod > 0 && yOffset > 0}
+        onClick={moveUp}
+      />
+      <Arrow
+        icon={faArrowDown}
+        bottom={"0"}
+        left={"50%"}
+        isVisible={scaleMod > 0 && yOffset < height / 2}
+        onClick={moveDown}
+      />
+      <Arrow
+        icon={faArrowLeft}
+        top={"50%"}
+        left={"0"}
+        isVisible={scaleMod > 0 && xOffset > 0}
+        onClick={moveLeft}
+      />
+      <Arrow
+        icon={faArrowRight}
+        top={"50%"}
+        right={"0"}
+        isVisible={scaleMod > 0 && xOffset < width / 2}
+        onClick={moveRight}
+      />
+      <Canvas
+        onTouchStart={touchStart}
+        onTouchMove={touchMove}
+        onTouchEnd={touchEnd}
+        onMouseDown={mouseDown}
+        onMouseOut={mouseOut}
+        onMouseUp={mouseUp}
+        onMouseMove={mouseMove}
+        ref={canvasRef}
+        width={width * scale}
+        height={height * scale}
+        id="canvas"
+      ></Canvas>
+    </Wrapper>
   );
 };
 export default Grid;

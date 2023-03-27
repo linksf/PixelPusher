@@ -1,10 +1,15 @@
 import { useContext, useState } from "react";
 import styled from "styled-components";
 import { StateContext } from "../context/StateContext";
-import { faPenRuler, faPenSquare } from "@fortawesome/free-solid-svg-icons";
+import {
+  faMagnifyingGlassMinus,
+  faMagnifyingGlassPlus,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
-const Wrapper = styled.div``;
+const Wrapper = styled.div`
+  margin: 0 15px;
+`;
 const IconWrapper = styled.div`
   position: relative;
   display: flex;
@@ -13,11 +18,11 @@ const IconWrapper = styled.div`
   align-items: center;
 `;
 const Icon = styled(FontAwesomeIcon)`
-  font-size: ${(props) => props.fontSize};
-  padding: 5px;
+  font-size: 20px;
+  padding: 0px;
   cursor: pointer;
   position: relative;
-  color: #6c8b93;
+  color: #232323;
 `;
 const Lable = styled.label`
   color: #ecf0f1;
@@ -29,7 +34,7 @@ const Value = styled.p`
   text-shadow: 0 0 5px #000000;
 `;
 const Input = styled.input`
-  width: 50px;
+  width: 75px;
 `;
 const Input2 = styled.input`
   -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
@@ -63,7 +68,7 @@ const HiddenWrapper = styled.div`
   flex-direction: column;
 `;
 
-const BrushSizeChanger = () => {
+const ZoomRange = () => {
   const [visible, setVisible] = useState(false);
   const {
     brushSize,
@@ -71,11 +76,13 @@ const BrushSizeChanger = () => {
     config,
     palette,
     currentColorIndex,
+    scaleMod,
+    setScaleMod,
   } = useContext(StateContext);
   const { scale } = config;
 
   const handleChange = (e) => {
-    setBrushSize(e.target.value);
+    setScaleMod(+e.target.value);
   };
 
   const toggleVisible = (e) => {
@@ -86,32 +93,29 @@ const BrushSizeChanger = () => {
     setVisible(false);
   };
 
-  const incramentBrushSize = () => {
-    if (brushSize < 10) {
-      setBrushSize(brushSize + 1);
-    }
+  const zoomIn = (e) => {
+    setScaleMod(Math.min(scaleMod + 1, scale));
   };
-  const decrementBrushSize = () => {
-    if (brushSize > 1) {
-      setBrushSize(brushSize - 1);
-    }
+
+  const zoomOut = (e) => {
+    setScaleMod(Math.max(scaleMod - 1, 0));
   };
   return (
     <Wrapper>
       <IconWrapper>
-        <Icon icon={faPenSquare} fontSize="15px" onClick={decrementBrushSize} />
+        <Icon icon={faMagnifyingGlassMinus} fontSize="25px" onClick={zoomIn} />
         <Input
           onBlur={handleBlur}
           type="range"
           min="1"
-          max="4"
-          value={brushSize}
+          max="20"
+          value={scaleMod}
           onChange={handleChange}
         />
-        <Icon icon={faPenSquare} fontSize="25px" onClick={incramentBrushSize} />
+        <Icon icon={faMagnifyingGlassPlus} fontSize="25px" onClick={zoomOut} />
       </IconWrapper>
     </Wrapper>
   );
 };
 
-export default BrushSizeChanger;
+export default ZoomRange;

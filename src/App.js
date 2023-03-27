@@ -84,14 +84,14 @@ useEffect(()=> {
       <Section bgColor="#ecf0f1" gridColumn="2/3">
         <Grid />
       </Section>
-      <Section bgColor="#232323" gridColumn="3/4">
+      <Section bgColor="#ecf0f1" gridColumn="3/4">
         <ColorHud/>      
       </Section>
       <Section bgColor="#232323" gridColumn="1/4">
       <FrameHud/>
         </Section>
         <Section bgColor="#ecf0f1" gridColumn="1/2">
-          <input type="range" min="0" max="10" step="1" value={scaleMod} onChange={(e) => {setScaleMod(+e.target.value)}}/>
+          <input type="range" min="0" max="20" step="1" value={scaleMod} onChange={(e) => {setScaleMod(+e.target.value)}}/>
         </Section>
     </Wrapper>
       </AppWrapper>
