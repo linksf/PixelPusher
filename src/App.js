@@ -14,7 +14,7 @@ const PalletteWrapper = styled.div`
   display: flex;
   margin: 10px;
   justify-content: space-evenly;
-  align-items: stretch;
+  align-items: center;
   flex-wrap: wrap;
   width: 80%;
   border: thin black solid;
@@ -29,7 +29,7 @@ const PaletteLable = styled.h3`
   width: 100%;
 `
 const Section = styled.div`
-width: 100%;
+width: 100vw;
 display: flex;
 flex-direction: column;
 justify-content: center;
@@ -44,12 +44,13 @@ display: flex;
 flex-direction: column;
 align-items: center;
 justify-content: flex-start;
+ touch-action: none;
 `
 const Wrapper = styled.div`
   display: grid;
   grid-template-columns: 1fr;
   grid-template-rows: 50px 50px 1fr 50px auto;
-  width: 100%;
+  width: 100vw;
 `
 // width: ${props => props.width}px;
 
@@ -90,9 +91,7 @@ useEffect(()=> {
       <Section bgColor="#232323" gridColumn="1/4">
       <FrameHud/>
         </Section>
-        <Section bgColor="#ecf0f1" gridColumn="1/2">
-          <input type="range" min="0" max="20" step="1" value={scaleMod} onChange={(e) => {setScaleMod(+e.target.value)}}/>
-        </Section>
+       
     </Wrapper>
       </AppWrapper>
   );

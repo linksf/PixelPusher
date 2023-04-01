@@ -8,7 +8,7 @@ const Wrapper = styled.div`
   align-items: center;
   justify-content: center;
   margin: 5px;
-  padding: 5px;
+  padding: 0px;
 `;
 const ColorName = styled.p``;
 const ColorBox = styled.div`

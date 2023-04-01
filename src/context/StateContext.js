@@ -26,6 +26,25 @@ export default function StateProvider({ children }) {
     const [undoAvailable, setUndoAvailable] = useState([0])
     const [xOffset, setXOffset] = useState(0)
     const [yOffset, setYOffset] = useState(0)
+    const [xOutOfBounds, setXOutOfBounds] = useState(false)
+    const [yOutOfBounds, setYOutOfBounds] = useState(false)
+    const [activePanDirection, setActivePanDirection] = useState(null)
+    const testBoundsX = ({xOff, yOff, scale, height, width, sMod}) => {
+        const startingPixel = xOff * scale
+        const endingPixel = width * (scale + sMod)
+        const maxSpan = width * scale
+        console.log(endingPixel - startingPixel, maxSpan)
+        console.log((endingPixel - startingPixel) >= maxSpan)
+        return (endingPixel - startingPixel) >= maxSpan
+    }
+    const testBoundsY = ({xOff, yOff, scale, height, width, sMod}) => {
+        const startingPixel = yOff * scale
+        const endingPixel = height * (scale + sMod)
+        const maxSpan = height * scale
+        console.log(endingPixel - startingPixel, maxSpan)
+        console.log((endingPixel - startingPixel) >= maxSpan)
+        return (endingPixel - startingPixel) >= maxSpan
+    }
     const value = {
         toolActive, setToolActive,
         tool, setTool,
@@ -33,7 +52,7 @@ export default function StateProvider({ children }) {
         palette, setPalette,
         frames, setFrames,
         currentFrameIndex, setCurrentFrameIndex, config,setConfig,
-        brushSize, setBrushSize, showPreviousFrame, setShowPreviousFrame, scaleMod, setScaleMod, undoData, setUndoData, undoAvailable, setUndoAvailable, xOffset, setXOffset, yOffset, setYOffset
+        brushSize, setBrushSize, showPreviousFrame, setShowPreviousFrame, scaleMod, setScaleMod, undoData, setUndoData, undoAvailable, setUndoAvailable, xOffset, setXOffset, yOffset, setYOffset, testBoundsX, testBoundsY, activePanDirection, setActivePanDirection
     }
 // useEffect(() => {
 //     const handleResize = () => {

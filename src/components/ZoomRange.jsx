@@ -32,6 +32,8 @@ const Value = styled.p`
   position: relative;
   color: #ecf0f1;
   text-shadow: 0 0 5px #000000;
+  font-weight: 600;
+  right: 50%;
 `;
 const Input = styled.input`
   width: 75px;
@@ -71,6 +73,8 @@ const HiddenWrapper = styled.div`
 const ZoomRange = () => {
   const [visible, setVisible] = useState(false);
   const {
+    testBoundsX,
+    testBoundsY,
     brushSize,
     setBrushSize,
     config,
@@ -78,10 +82,24 @@ const ZoomRange = () => {
     currentColorIndex,
     scaleMod,
     setScaleMod,
+    setXOffset,
+    setYOffset,
+    xOffset,
+    yOffset,
   } = useContext(StateContext);
-  const { scale } = config;
+  const { scale, width, height } = config;
 
   const handleChange = (e) => {
+    if (!testBoundsX({ ...defaultData, sMod: +e.target.value })) {
+      setXOffset(xOffset - 1);
+      // handleChange(e);
+      return;
+    }
+    if (!testBoundsY({ ...defaultData, sMod: +e.target.value })) {
+      setYOffset(yOffset - 1);
+      // handleChange(e);
+      return;
+    }
     setScaleMod(+e.target.value);
   };
 
@@ -92,18 +110,54 @@ const ZoomRange = () => {
   const handleBlur = (e) => {
     setVisible(false);
   };
-
+  const defaultData = {
+    xOff: xOffset,
+    yOff: yOffset,
+    scale: scale,
+    height: height,
+    width: width,
+    sMod: scaleMod,
+  };
   const zoomIn = (e) => {
-    setScaleMod(Math.min(scaleMod + 1, scale));
+    if (scaleMod >= 20) return;
+    if (!testBoundsX({ ...defaultData, sMod: scaleMod + 1 })) {
+      setXOffset(xOffset - 1);
+      zoomIn(e);
+      return;
+    }
+    if (!testBoundsY({ ...defaultData, sMod: scaleMod + 1 })) {
+      setYOffset(yOffset - 1);
+      zoomIn(e);
+      return;
+    }
+    setScaleMod(scaleMod + 1);
   };
 
   const zoomOut = (e) => {
-    setScaleMod(Math.max(scaleMod - 1, 0));
+    if (scaleMod === 0) return;
+    let xmod = 0;
+    let ymod = 0;
+    while (
+      !testBoundsX({ ...defaultData, sMod: scaleMod - 1, xOff: xOffset - xmod })
+    ) {
+      xmod = xmod + 1;
+    }
+    setXOffset(xOffset - xmod);
+    // zoomOut(e);
+    // return;
+
+    while (
+      !testBoundsY({ ...defaultData, sMod: scaleMod - 1, yOff: yOffset - ymod })
+    ) {
+      ymod = ymod + 1;
+    }
+    setYOffset(yOffset - ymod);
+    setScaleMod(scaleMod - 1);
   };
   return (
     <Wrapper>
       <IconWrapper>
-        <Icon icon={faMagnifyingGlassMinus} fontSize="25px" onClick={zoomIn} />
+        <Icon icon={faMagnifyingGlassMinus} fontSize="25px" onClick={zoomOut} />
         <Input
           onBlur={handleBlur}
           type="range"
@@ -112,7 +166,8 @@ const ZoomRange = () => {
           value={scaleMod}
           onChange={handleChange}
         />
-        <Icon icon={faMagnifyingGlassPlus} fontSize="25px" onClick={zoomOut} />
+        <Value>{scaleMod}</Value>
+        <Icon icon={faMagnifyingGlassPlus} fontSize="25px" onClick={zoomIn} />
       </IconWrapper>
     </Wrapper>
   );

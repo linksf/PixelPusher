@@ -21,19 +21,20 @@ const Wrapper = styled.div`
 const Arrow = styled(FontAwesomeIcon)`
   font-size: 20px;
   color: black;
-  background-color: palegreen;
-  border-radius: 50%;
+  background-color: #22d82279;
   border: thin solid #000000;
-  width: 20px;
-  height: 20px;
+  width: ${(props) => (props.orientation === "horizontal" ? 400 : 20)}px;
+  height: ${(props) => (props.orientation === "horizontal" ? 20 : 400)}px;
   position: absolute;
   top: ${(props) => props.top};
   left: ${(props) => props.left};
   bottom: ${(props) => props.bottom};
   right: ${(props) => props.right};
-  display: ${(props) => (props.isVisible ? "block" : "none")};
+  display: ${(props) => (props.visible === "true" ? "block" : "none")};
   cursor: pointer;
   z-index: 3;
+  scale: ${(props) => (props.activated === "true" ? "1.1" : "1")};
+  transition: all 200ms ease-in-out;
 `;
 // class Pixel{
 //     constructor(col, row, colorIndex, scale=20){
@@ -47,6 +48,8 @@ const Arrow = styled(FontAwesomeIcon)`
 
 const Grid = (props) => {
   const {
+    testBoundsX,
+    testBoundsY,
     toolActive,
     setToolActive,
     tool,
@@ -73,12 +76,15 @@ const Grid = (props) => {
     setXOffset,
     yOffset,
     setYOffset,
+    activePanDirection,
+    setActivePanDirection,
   } = useContext(StateContext);
   const { width, height, scale } = config;
   const [pixels, setPixels] = useState(Array(width * height).fill(0));
   const [ctx, setCtx] = useState(null);
   //const [palette, setPalette] = useState(
   //      ["#aaaaaa", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF"])
+
   const canvasRef = useRef(null);
 
   const getIndexFromColRow = (col, row) => {
@@ -199,8 +205,10 @@ const Grid = (props) => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     const rect = canvas.getBoundingClientRect();
-    const col = Math.floor((e.clientX - rect.left) / (scale + scaleMod));
-    const row = Math.floor((e.clientY - rect.top) / (scale + scaleMod));
+    const col =
+      Math.floor((e.clientX - rect.left) / (scale + scaleMod)) + xOffset;
+    const row =
+      Math.floor((e.clientY - rect.top) / (scale + scaleMod)) + yOffset;
     inputDown(col, row);
   };
 
@@ -214,11 +222,13 @@ const Grid = (props) => {
     const rect = canvas.getBoundingClientRect();
     const col = Math.min(
       width,
-      Math.max(0, Math.floor((e.clientX - rect.left) / (scale + scaleMod)))
+      Math.max(0, Math.floor((e.clientX - rect.left) / (scale + scaleMod))) +
+        xOffset
     );
     const row = Math.min(
       height,
-      Math.max(0, Math.floor((e.clientY - rect.top) / (scale + scaleMod)))
+      Math.max(0, Math.floor((e.clientY - rect.top) / (scale + scaleMod))) +
+        yOffset
     );
     if (toolActive) {
       if (tool === "draw" || tool === "erase") {
@@ -383,6 +393,15 @@ const Grid = (props) => {
         scale + scaleMod,
         scale + scaleMod
       );
+      // context.font = "12px Arial";
+      // context.fillStyle = "#000000";
+
+      // context.fillText(
+      //   `${col},${row}`,
+      //   col * (scale + scaleMod) - xOffset * scale,
+      //   row * (scale + scaleMod) - yOffset * scale + scale,
+      //   19
+      // );
       context.strokeStyle = "#000000";
       context.strokeRect(
         col * (scale + scaleMod) - xOffset * scale,
@@ -422,49 +441,161 @@ const Grid = (props) => {
     printFrame();
   }, [currentFrameIndex, frames, palette, scale, scaleMod, xOffset, yOffset]);
 
-  const moveUp = (e) => {
-    setYOffset(Math.max(0, yOffset - 1));
+  // const moveUp = (e) => {
+  //   console.log(`
+  //   new yOffset: ${Math.max(0, yOffset - 1)}
+  //   xOffset: ${xOffset}
+  //   scale: ${scale}
+  //   scaleMod: ${scaleMod}
+  //   yEnd: ${width * (scale + scaleMod) - yOffset * scale}
+  //   xEnd: ${height * (scale + scaleMod) - xOffset * scale}`);
+  //   setYOffset(Math.max(0, yOffset - 1));
+  // };
+
+  // const moveDown = (e) => {
+  //   console.log(`
+  //   new yOffset: ${Math.min(height / 2, yOffset + 1)}
+  //   xOffset: ${xOffset}
+  //   scale: ${scale}
+  //   scaleMod: ${scaleMod}
+  //   yEnd: ${width * (scale + scaleMod) - yOffset * scale}
+  //   xEnd: ${height * (scale + scaleMod) - xOffset * scale}`);
+  //   setYOffset(yOffset + 1);
+  // };
+  // const moveLeft = (e) => {
+  //   console.log(`
+  //   new xOffset: ${Math.max(0, xOffset - 1)}
+  //   yOffset: ${yOffset}
+  //   scale: ${scale}
+  //   scaleMod: ${scaleMod}
+  //   yEnd: ${width * (scale + scaleMod) - yOffset * scale}
+  //   xEnd: ${height * (scale + scaleMod) - (xOffset - 1) * scale}`);
+  //   setXOffset(Math.max(0, xOffset - 1));
+  // };
+  // const moveRight = (e) => {
+  //   console.log(`
+  //   new xOffset: ${xOffset + 1}
+  //   yOffset: ${yOffset}
+  //   scale: ${scale}
+  //   scaleMod: ${scaleMod}
+  //   yEnd: ${width * (scale + scaleMod) - yOffset * scale}
+  //   xEnd: ${height * (scale + scaleMod) - (xOffset + 1) * scale}`);
+  //   setXOffset(xOffset + 1);
+  // };
+  const defaultData = {
+    xOff: xOffset,
+    yOff: yOffset,
+    scale: scale,
+    height: height,
+    width: width,
+    sMod: scaleMod,
   };
 
-  const moveDown = (e) => {
-    setYOffset(Math.min(height / 2, yOffset + 1));
+  const move = (direction) => {
+    console.log(direction);
+    setActivePanDirection(direction);
+    switch (direction) {
+      case "right":
+        if (xOffset >= 20) {
+          setActivePanDirection(null);
+          return;
+        }
+        if (!testBoundsX({ ...defaultData, xOff: xOffset + 1 })) {
+          setActivePanDirection(null);
+          return;
+        }
+        setXOffset(xOffset + 1);
+        break;
+      case "left":
+        if (xOffset <= 0) {
+          setActivePanDirection(null);
+          return;
+        }
+        if (!testBoundsX({ ...defaultData, xOff: xOffset - 1 })) {
+          setActivePanDirection(null);
+          return;
+        }
+        setXOffset(xOffset - 1);
+        break;
+      case "up":
+        if (yOffset <= 0) {
+          setActivePanDirection(null);
+          return;
+        }
+        if (!testBoundsY({ ...defaultData, yOff: yOffset - 1 })) {
+          setActivePanDirection(null);
+          return;
+        }
+        setYOffset(yOffset - 1);
+        break;
+      case "down":
+        if (yOffset >= 20) {
+          setActivePanDirection(null);
+          return;
+        }
+        if (!testBoundsY({ ...defaultData, yOff: yOffset + 1 })) {
+          setActivePanDirection(null);
+          return;
+        }
+        setYOffset(yOffset + 1);
+        break;
+      default:
+        break;
+    }
   };
-  const moveLeft = (e) => {
-    setXOffset(Math.max(0, xOffset - 1));
-  };
-  const moveRight = (e) => {
-    setXOffset(Math.min(width / 2, xOffset + 1));
+  const endPan = () => {
+    setActivePanDirection(null);
   };
 
   return (
     <Wrapper>
       <Arrow
+        activated={`${activePanDirection === "up"}`}
         icon={faArrowUp}
         top={"0"}
-        left={"50%"}
-        isVisible={scaleMod > 0 && yOffset > 0}
-        onClick={moveUp}
+        left={"40px"}
+        visible={`${scaleMod > 0 && yOffset > 0}`}
+        onMouseDown={(e) => move("up")}
+        orientation="horizontal"
+        onMouseUp={endPan}
+        onTouchStart={(e) => move("up")}
+        onTouchEnd={endPan}
       />
       <Arrow
+        activated={`${activePanDirection === "down"}`}
         icon={faArrowDown}
         bottom={"0"}
-        left={"50%"}
-        isVisible={scaleMod > 0 && yOffset < height / 2}
-        onClick={moveDown}
+        left={"40px"}
+        visible={`${scaleMod > 0}`}
+        onMouseDown={(e) => move("down")}
+        onMouseUp={endPan}
+        onTouchStart={(e) => move("down")}
+        onTouchEnd={endPan}
+        orientation="horizontal"
       />
       <Arrow
+        activated={`${activePanDirection === "left"}`}
         icon={faArrowLeft}
-        top={"50%"}
+        top={"40px"}
         left={"0"}
-        isVisible={scaleMod > 0 && xOffset > 0}
-        onClick={moveLeft}
+        visible={`${scaleMod > 0 && xOffset > 0}`}
+        onMouseDown={(e) => move("left")}
+        onMouseUp={endPan}
+        onTouchStart={(e) => move("left")}
+        onTouchEnd={endPan}
+        orientation="vertical"
       />
       <Arrow
+        activated={`${activePanDirection === "right"}`}
         icon={faArrowRight}
-        top={"50%"}
+        top={"40px"}
         right={"0"}
-        isVisible={scaleMod > 0 && xOffset < width / 2}
-        onClick={moveRight}
+        visible={`${scaleMod > 0}`}
+        onMouseDown={(e) => move("right")}
+        onMouseUp={endPan}
+        onTouchStart={(e) => move("right")}
+        onTouchEnd={endPan}
+        orientation="vertical"
       />
       <Canvas
         onTouchStart={touchStart}

@@ -20,7 +20,7 @@ const Wrapper = styled.div`
   position: relative;
   transition: all 200ms ease;
   cursor: pointer;
-  padding: 10px;
+  padding: 0px;
   margin: 0 5px;
 `;
 const SizeLabel = styled.p`
