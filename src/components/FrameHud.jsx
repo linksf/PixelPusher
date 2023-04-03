@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import styled from "styled-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
+import { faPlusCircle, faCopy } from "@fortawesome/free-solid-svg-icons";
 import { StateContext } from "../context/StateContext";
 
 const HudWrapper = styled.div`

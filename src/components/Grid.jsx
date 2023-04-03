@@ -23,11 +23,12 @@ const Wrapper = styled.div`
 `;
 const Arrow = styled(FontAwesomeIcon)`
   font-size: 20px;
-  color: black;
+  color: #000000aa;
   background-color: #22d82279;
-  border: thin solid #000000;
-  width: ${(props) => (props.orientation === "horizontal" ? 400 : 20)}px;
-  height: ${(props) => (props.orientation === "horizontal" ? 20 : 400)}px;
+  border: thick solid #000000aa;
+  border-radius: 50%;
+  width: ${(props) => (props.orientation === "horizontal" ? 40 : 40)}px;
+  height: ${(props) => (props.orientation === "horizontal" ? 40 : 40)}px;
   position: absolute;
   top: ${(props) => props.top};
   left: ${(props) => props.left};
@@ -85,11 +86,10 @@ const Grid = (props) => {
     setActivePanDirection,
   } = useContext(StateContext);
   const { width, height, scale } = config;
-  const { saveFrames } = useContext(FirebaseContext);
+  const { saveFrames, loadFrameObjects } = useContext(FirebaseContext);
 
   //const [palette, setPalette] = useState(
-  //      ["#aaaaaa", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF"])
-  const [blob, setBlob] = useState(null);
+  //      ["#aaaaaa", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", "#FFFF00",
   const [showPrompt, setShowPrompt] = useState(false);
 
   const canvasRef = useRef(null);
@@ -400,6 +400,25 @@ const Grid = (props) => {
         scale + scaleMod,
         scale + scaleMod
       );
+      context.font = "12px Arial";
+      context.fillStyle = "#000000";
+      if (row % 8 == 0 && col !== 0 && col % 8 !== 0 && col % 2 == 0) {
+        context.fillText(
+          `${col}`,
+          col * (scale + scaleMod) - xOffset * scale + 1,
+          row * (scale + scaleMod) - yOffset * scale + scale - 2,
+          14
+        );
+      }
+      if (col % 8 == 0 && row !== 0 && row % 8 !== 0 && row % 2 == 0) {
+        context.fillText(
+          `${row}`,
+          col * (scale + scaleMod) - xOffset * scale + 1,
+          row * (scale + scaleMod) - yOffset * scale + scale - 2,
+          14
+        );
+      }
+
       // context.font = "12px Arial";
       // context.fillStyle = "#000000";
 
@@ -571,52 +590,7 @@ const Grid = (props) => {
         }
       : null;
   };
-  const turnFramesToObject = () => {
-    const framesObject = {};
-    for (let i = 0; i < frames.length; i++) {
-      framesObject[`${i}`] = frames[i];
-    }
-    return framesObject;
-  };
-  const save = () => {
-    makeFrameReel()
-      .then(() => {
-        saveFrames({
-          name: title,
-          frames: turnFramesToObject(),
-          palette: palette,
-          blob: blob,
-        });
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  };
 
-  const makeFrameReel = async () => {
-    const reelCanvas = document.createElement("canvas");
-    reelCanvas.width = frames.length * width * 4;
-    reelCanvas.height = height * 4;
-    reelCanvas.style.position = "absolute";
-    reelCanvas.style.top = 0;
-    reelCanvas.style.left = 0;
-    reelCanvas.style.zIndex = 1;
-
-    const reelContext = reelCanvas.getContext("2d");
-    for (let i = 0; i < frames.length; i++) {
-      const frame = [...frames[i]];
-      for (let j = 0; j < frame.length; j++) {
-        const { col, row } = getColRowFromIndex(j);
-        reelContext.fillStyle = frame[j] >= 0 ? palette[frame[j]] : "#00000000";
-        reelContext.fillRect(col * 4 + i * width * 4, row * 4, 4, 4);
-      }
-    }
-    document.body.appendChild(reelCanvas);
-    reelCanvas.toBlob((blob) => {
-      setBlob(blob);
-    });
-    reelCanvas.remove();
-  };
   // const getImageOfFrames = (frames, palette) => {
   //   const rgbFrames = frames.map((frame) =>
   //     frame.reduce((acc, colorIndex) => {
@@ -656,7 +630,7 @@ const Grid = (props) => {
         activated={`${activePanDirection === "up"}`}
         icon={faArrowUp}
         top={"0"}
-        left={"40px"}
+        left={"calc(50% - 20px)"}
         visible={`${scaleMod > 0 && yOffset > 0}`}
         onMouseDown={(e) => move("up")}
         orientation="horizontal"
@@ -668,7 +642,7 @@ const Grid = (props) => {
         activated={`${activePanDirection === "down"}`}
         icon={faArrowDown}
         bottom={"0"}
-        left={"40px"}
+        left={"calc(50% - 20px)"}
         visible={`${scaleMod > 0}`}
         onMouseDown={(e) => move("down")}
         onMouseUp={endPan}
@@ -679,7 +653,7 @@ const Grid = (props) => {
       <Arrow
         activated={`${activePanDirection === "left"}`}
         icon={faArrowLeft}
-        top={"40px"}
+        top={"calc(50% - 20px)"}
         left={"0"}
         visible={`${scaleMod > 0 && xOffset > 0}`}
         onMouseDown={(e) => move("left")}
@@ -691,7 +665,7 @@ const Grid = (props) => {
       <Arrow
         activated={`${activePanDirection === "right"}`}
         icon={faArrowRight}
-        top={"40px"}
+        top={"calc(50% - 20px)"}
         right={"0"}
         visible={`${scaleMod > 0}`}
         onMouseDown={(e) => move("right")}
@@ -713,7 +687,6 @@ const Grid = (props) => {
         height={height * scale}
         id="canvas"
       ></Canvas>
-      <button onClick={save}>IMG</button>
     </Wrapper>
   );
 };

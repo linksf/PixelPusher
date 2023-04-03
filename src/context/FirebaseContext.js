@@ -63,7 +63,17 @@ export default function FirebaseProvider({ children }) {
   //   const frames = []
 
   // }
-  const value = { app, analytics, db, saveFrames };
+  const loadFrameObjects = async () => {
+    const framesCollectionRef = collection(db, "frames");
+    const frames = [];
+    const querySnapshot = await getDocs(framesCollectionRef);
+    querySnapshot.forEach((doc) => {
+      frames.push(doc.data());
+    });
+    return frames;
+  }
+
+  const value = { app, analytics, db, saveFrames, loadFrameObjects};
   return (
     <FirebaseContext.Provider value={value}>
       {children}

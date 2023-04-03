@@ -8,6 +8,8 @@ import ToolHud from './components/ToolHud';
 import AppHud from './components/AppHud';
 import FrameHud from './components/FrameHud';
 import TitleHud from './components/TitleHud';
+import FirebaseHud from './components/FirebaseHud';
+
 const { StateContext } = require('./context/StateContext');
 
 const PalletteWrapper = styled.div`
@@ -49,7 +51,7 @@ justify-content: flex-start;
 const Wrapper = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: 50px 50px 25px 1fr 50px auto;
+  grid-template-rows: 50px 50px 35px 1fr 50px 50px auto;
   width: 100vw;
 `
 // width: ${props => props.width}px;
@@ -93,6 +95,9 @@ useEffect(()=> {
       </Section>
       <Section bgColor="#232323" gridColumn="1/4">
       <FrameHud/>
+        </Section>
+      <Section bgColor="#232323" gridColumn="1/4">
+      <FirebaseHud/>
         </Section>
        
     </Wrapper>

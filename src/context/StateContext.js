@@ -30,6 +30,8 @@ export default function StateProvider({ children }) {
     const [yOutOfBounds, setYOutOfBounds] = useState(false)
     const [activePanDirection, setActivePanDirection] = useState(null)
     const [title, setTitle] = useState("untitled")
+ 
+  const [blob, setBlob] = useState(null);
     const testBoundsX = ({xOff, yOff, scale, height, width, sMod}) => {
         const startingPixel = xOff * scale
         const endingPixel = width * (scale + sMod)
@@ -54,7 +56,7 @@ export default function StateProvider({ children }) {
         palette, setPalette,
         frames, setFrames,
         currentFrameIndex, setCurrentFrameIndex, config,setConfig,
-        brushSize, setBrushSize, showPreviousFrame, setShowPreviousFrame, scaleMod, setScaleMod, undoData, setUndoData, undoAvailable, setUndoAvailable, xOffset, setXOffset, yOffset, setYOffset, testBoundsX, testBoundsY, activePanDirection, setActivePanDirection
+        brushSize, setBrushSize, showPreviousFrame, setShowPreviousFrame, scaleMod, setScaleMod, undoData, setUndoData, undoAvailable, setUndoAvailable, xOffset, setXOffset, yOffset, setYOffset, testBoundsX, testBoundsY, activePanDirection, setActivePanDirection, blob, setBlob
     }
 // useEffect(() => {
 //     const handleResize = () => {

@@ -9,7 +9,7 @@ const Wrapper = styled.div`
   align-items: center;
   justify-content: center;
   width: 100%;
-  padding: 0 20px;
+  margin: 20px;
   color: #ecf0f1;
 `;
 const Title = styled.h3`
