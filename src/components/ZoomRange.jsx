@@ -161,7 +161,7 @@ const ZoomRange = () => {
         <Input
           onBlur={handleBlur}
           type="range"
-          min="1"
+          min="0"
           max="20"
           value={scaleMod}
           onChange={handleChange}

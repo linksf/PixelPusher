@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { StateContext } from "../context/StateContext";
+import { FirebaseContext } from "../context/FirebaseContext";
 import styled from "styled-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -8,6 +9,8 @@ import {
   faArrowDown,
   faArrowUp,
 } from "@fortawesome/free-solid-svg-icons";
+import Prompt from "./Prompt";
+
 const Canvas = styled.canvas`
   touch-action: none;
   cursor: crosshair;
@@ -48,6 +51,8 @@ const Arrow = styled(FontAwesomeIcon)`
 
 const Grid = (props) => {
   const {
+    title,
+    setTitle,
     testBoundsX,
     testBoundsY,
     toolActive,
@@ -80,10 +85,12 @@ const Grid = (props) => {
     setActivePanDirection,
   } = useContext(StateContext);
   const { width, height, scale } = config;
-  const [pixels, setPixels] = useState(Array(width * height).fill(0));
-  const [ctx, setCtx] = useState(null);
+  const { saveFrames } = useContext(FirebaseContext);
+
   //const [palette, setPalette] = useState(
   //      ["#aaaaaa", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF"])
+  const [blob, setBlob] = useState(null);
+  const [showPrompt, setShowPrompt] = useState(false);
 
   const canvasRef = useRef(null);
 
@@ -436,7 +443,15 @@ const Grid = (props) => {
       }
     }
   };
-
+  const getImgURL = () => {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    // const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+    // const data = imgData.data;
+    const imgURL = canvas.toDataURL("image/png");
+    console.log(imgURL);
+    return imgURL;
+  };
   useEffect(() => {
     printFrame();
   }, [currentFrameIndex, frames, palette, scale, scaleMod, xOffset, yOffset]);
@@ -546,7 +561,95 @@ const Grid = (props) => {
   const endPan = () => {
     setActivePanDirection(null);
   };
+  const hexToRgb = (hex) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : null;
+  };
+  const turnFramesToObject = () => {
+    const framesObject = {};
+    for (let i = 0; i < frames.length; i++) {
+      framesObject[`${i}`] = frames[i];
+    }
+    return framesObject;
+  };
+  const save = () => {
+    makeFrameReel()
+      .then(() => {
+        saveFrames({
+          name: title,
+          frames: turnFramesToObject(),
+          palette: palette,
+          blob: blob,
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
 
+  const makeFrameReel = async () => {
+    const reelCanvas = document.createElement("canvas");
+    reelCanvas.width = frames.length * width * 4;
+    reelCanvas.height = height * 4;
+    reelCanvas.style.position = "absolute";
+    reelCanvas.style.top = 0;
+    reelCanvas.style.left = 0;
+    reelCanvas.style.zIndex = 1;
+
+    const reelContext = reelCanvas.getContext("2d");
+    for (let i = 0; i < frames.length; i++) {
+      const frame = [...frames[i]];
+      for (let j = 0; j < frame.length; j++) {
+        const { col, row } = getColRowFromIndex(j);
+        reelContext.fillStyle = frame[j] >= 0 ? palette[frame[j]] : "#00000000";
+        reelContext.fillRect(col * 4 + i * width * 4, row * 4, 4, 4);
+      }
+    }
+    document.body.appendChild(reelCanvas);
+    reelCanvas.toBlob((blob) => {
+      setBlob(blob);
+    });
+    reelCanvas.remove();
+  };
+  // const getImageOfFrames = (frames, palette) => {
+  //   const rgbFrames = frames.map((frame) =>
+  //     frame.reduce((acc, colorIndex) => {
+  //       if (colorIndex >= 0) {
+  //         const { r, g, b } = hexToRgb(palette[colorIndex]);
+  //         return acc.concat([r, g, b, 255]);
+  //       } else {
+  //         return acc.concat([0, 0, 0, 0]);
+  //       }
+  //     }, [])
+  //   );
+  //   console.table(rgbFrames);
+  //   const frameWidth = frames[0][0].length;
+  //   const frameHeight = frames[0].length;
+  //   const imageWidth = frames.length * frameWidth;
+  //   const imageHeight = frameHeight;
+  //   const imageCanvas = document.createElement("canvas");
+  //   imageCanvas.width = imageWidth;
+  //   imageCanvas.height = imageHeight;
+  //   imageCanvas.style.position = "absolute";
+  //   const imageCxt = imageCanvas.getContext("2d");
+  //   for (const [i, frame] of Object.entries(rgbFrames)) {
+  //     for (let j = 0; j < 24 * 24 * 4; j++) {
+  //       imageCxt.fillStyle = `rgba(${frame[j]},${frame[j + 1]},${
+  //         frame[j + 2]
+  //       },${frame[j + 3]})`;
+  //       imageCxt.fillRect(j, j, 1, 1);
+  //     }
+  //     const imgData = new ImageData(rgbFrame, 24);
+  //     imageCanvas.getContext("2d").putImageData(imgData, i * frameWidth, 0);
+  //   }
+  //   console.log(imageCanvas.toDataURL("image/png"));
+  // };
   return (
     <Wrapper>
       <Arrow
@@ -610,6 +713,7 @@ const Grid = (props) => {
         height={height * scale}
         id="canvas"
       ></Canvas>
+      <button onClick={save}>IMG</button>
     </Wrapper>
   );
 };

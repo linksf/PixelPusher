@@ -29,6 +29,7 @@ export default function StateProvider({ children }) {
     const [xOutOfBounds, setXOutOfBounds] = useState(false)
     const [yOutOfBounds, setYOutOfBounds] = useState(false)
     const [activePanDirection, setActivePanDirection] = useState(null)
+    const [title, setTitle] = useState("untitled")
     const testBoundsX = ({xOff, yOff, scale, height, width, sMod}) => {
         const startingPixel = xOff * scale
         const endingPixel = width * (scale + sMod)
@@ -46,6 +47,7 @@ export default function StateProvider({ children }) {
         return (endingPixel - startingPixel) >= maxSpan
     }
     const value = {
+        title, setTitle,
         toolActive, setToolActive,
         tool, setTool,
         currentColorIndex, setCurrentColorIndex,

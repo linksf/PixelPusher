@@ -5,9 +5,9 @@ import PaletteColor from './components/PaletteColor';
 import styled from 'styled-components';
 import ColorHud from './components/ColorHud';
 import ToolHud from './components/ToolHud';
-import TitleHud from './components/TitleHud';
+import AppHud from './components/AppHud';
 import FrameHud from './components/FrameHud';
-
+import TitleHud from './components/TitleHud';
 const { StateContext } = require('./context/StateContext');
 
 const PalletteWrapper = styled.div`
@@ -49,7 +49,7 @@ justify-content: flex-start;
 const Wrapper = styled.div`
   display: grid;
   grid-template-columns: 1fr;
-  grid-template-rows: 50px 50px 1fr 50px auto;
+  grid-template-rows: 50px 50px 25px 1fr 50px auto;
   width: 100vw;
 `
 // width: ${props => props.width}px;
@@ -77,10 +77,13 @@ useEffect(()=> {
     width={width * scale + 10}
     className="App">
       <Section bgColor="#232323" gridColumn="1/4">
-        <TitleHud/>
+        <AppHud/>
       </Section>
-      <Section bgColor="ecf0f1" gridColumn="1/2">
+      <Section bgColor="#ecf0f1" gridColumn="1/2">
         <ToolHud/>      
+      </Section>
+      <Section bgColor="#ecf0f1" gridColumn="2/3">
+        <TitleHud />
       </Section>
       <Section bgColor="#ecf0f1" gridColumn="2/3">
         <Grid />
