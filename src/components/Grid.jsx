@@ -216,6 +216,10 @@ const Grid = (props) => {
       Math.floor((e.clientX - rect.left) / (scale + scaleMod)) + xOffset;
     const row =
       Math.floor((e.clientY - rect.top) / (scale + scaleMod)) + yOffset;
+    console.log(
+      Math.floor((e.clientX - rect.left) / (scale + scaleMod) + xOffset)
+    );
+
     inputDown(col, row);
   };
 
@@ -395,8 +399,8 @@ const Grid = (props) => {
 
       context.fillStyle = fillColor;
       context.fillRect(
-        col * (scale + scaleMod) - xOffset * scale,
-        row * (scale + scaleMod) - yOffset * scale,
+        col * (scale + scaleMod) - xOffset * (scale + scaleMod),
+        row * (scale + scaleMod) - yOffset * (scale + scaleMod),
         scale + scaleMod,
         scale + scaleMod
       );
@@ -405,16 +409,16 @@ const Grid = (props) => {
       if (row % 8 == 0 && col !== 0 && col % 8 !== 0 && col % 2 == 0) {
         context.fillText(
           `${col}`,
-          col * (scale + scaleMod) - xOffset * scale + 1,
-          row * (scale + scaleMod) - yOffset * scale + scale - 2,
+          col * (scale + scaleMod) - xOffset * (scale + scaleMod) + 1,
+          row * (scale + scaleMod) - yOffset * (scale + scaleMod) + scale - 2,
           14
         );
       }
       if (col % 8 == 0 && row !== 0 && row % 8 !== 0 && row % 2 == 0) {
         context.fillText(
           `${row}`,
-          col * (scale + scaleMod) - xOffset * scale + 1,
-          row * (scale + scaleMod) - yOffset * scale + scale - 2,
+          col * (scale + scaleMod) - xOffset * (scale + scaleMod) + 1,
+          row * (scale + scaleMod) - yOffset * (scale + scaleMod) + scale - 2,
           14
         );
       }
@@ -430,8 +434,8 @@ const Grid = (props) => {
       // );
       context.strokeStyle = "#000000";
       context.strokeRect(
-        col * (scale + scaleMod) - xOffset * scale,
-        row * (scale + scaleMod) - yOffset * scale,
+        col * (scale + scaleMod) - xOffset * (scale + scaleMod),
+        row * (scale + scaleMod) - yOffset * (scale + scaleMod),
         scale + scaleMod,
         scale + scaleMod
       );
@@ -439,17 +443,23 @@ const Grid = (props) => {
         context.strokeStyle = "#000000";
         context.lineWidth = 2;
         context.beginPath();
-        context.moveTo(i * (scale + scaleMod) - xOffset * scale, 0);
+        context.moveTo(
+          i * (scale + scaleMod) - xOffset * (scale + scaleMod),
+          0
+        );
         context.lineTo(
-          i * (scale + scaleMod) - xOffset * scale,
+          i * (scale + scaleMod) - xOffset * (scale + scaleMod),
           height * (scale + scaleMod)
         );
         context.stroke();
         context.beginPath();
-        context.moveTo(0, i * (scale + scaleMod) - yOffset * scale);
+        context.moveTo(
+          0,
+          i * (scale + scaleMod) - yOffset * (scale + scaleMod)
+        );
         context.lineTo(
-          width * (scale + scaleMod) - yOffset * scale,
-          i * (scale + scaleMod) - yOffset * scale
+          width * (scale + scaleMod) - yOffset * (scale + scaleMod),
+          i * (scale + scaleMod) - yOffset * (scale + scaleMod)
         );
         context.stroke();
         context.strokeRect(

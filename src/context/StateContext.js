@@ -33,17 +33,17 @@ export default function StateProvider({ children }) {
  
   const [blob, setBlob] = useState(null);
     const testBoundsX = ({xOff, yOff, scale, height, width, sMod}) => {
-        const startingPixel = xOff * scale
+        const startingPixel = xOff * (scale + sMod)
         const endingPixel = width * (scale + sMod)
-        const maxSpan = width * scale
+        const maxSpan = width * (scale)
         console.log(endingPixel - startingPixel, maxSpan)
         console.log((endingPixel - startingPixel) >= maxSpan)
         return (endingPixel - startingPixel) >= maxSpan
     }
     const testBoundsY = ({xOff, yOff, scale, height, width, sMod}) => {
-        const startingPixel = yOff * scale
+        const startingPixel = yOff * (scale + sMod)
         const endingPixel = height * (scale + sMod)
-        const maxSpan = height * scale
+        const maxSpan = height * (scale)
         console.log(endingPixel - startingPixel, maxSpan)
         console.log((endingPixel - startingPixel) >= maxSpan)
         return (endingPixel - startingPixel) >= maxSpan
