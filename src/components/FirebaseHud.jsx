@@ -8,6 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { StateContext } from "../context/StateContext";
 import { FirebaseContext } from "../context/FirebaseContext";
+import AssetLibrary from "./AssetLibrary";
 
 const HudWrapper = styled.div`
   display: flex;
@@ -38,7 +39,13 @@ const FirebaseHud = () => {
     setBlob,
   } = useContext(StateContext);
   const { width, height } = config;
-  const { saveFrames, loadFrameObjects } = useContext(FirebaseContext);
+  const { putFrames, loadFramesArray } = useContext(FirebaseContext);
+  const [framesData, setFramesData] = useState([]);
+  const [showLibrary, setShowLibrary] = useState(false);
+  const toggleLibrary = () => {
+    const newShowLibrary = !showLibrary;
+    setShowLibrary(newShowLibrary);
+  };
   const getColRowFromIndex = (index) => {
     const col = index % width;
     const row = Math.floor(index / width);
@@ -58,63 +65,39 @@ const FirebaseHud = () => {
     }
     return framesObject;
   };
-  const saveToFirebase = () => {
-    makeFrameReel()
-      .then(() => {
-        saveFrames({
-          name: title,
-          frames: turnFramesToObject(),
-          palette: palette,
-          blob: blob,
-        });
+
+  const loadFrames = async () => {
+    loadFramesArray()
+      .then((dataArray) => {
+        console.log(dataArray);
+        setFramesData(dataArray);
+        toggleLibrary();
       })
       .catch((err) => {
         console.log(err);
       });
-  };
-  const makeFrameReel = async () => {
-    const reelCanvas = document.createElement("canvas");
-    reelCanvas.width = frames.length * width * 4;
-    reelCanvas.height = height * 4;
-    reelCanvas.style.position = "absolute";
-    reelCanvas.style.top = 0;
-    reelCanvas.style.left = 0;
-    reelCanvas.style.zIndex = 1;
-
-    const reelContext = reelCanvas.getContext("2d");
-    for (let i = 0; i < frames.length; i++) {
-      const frame = [...frames[i]];
-      for (let j = 0; j < frame.length; j++) {
-        const { col, row } = getColRowFromIndex(j);
-        reelContext.fillStyle = frame[j] >= 0 ? palette[frame[j]] : "#00000000";
-        reelContext.fillRect(col * 4 + i * width * 4, row * 4, 4, 4);
-      }
-    }
-    for (let i = 0; i < frames.length; i++) {
-      reelContext.strokeStyle = "#000000";
-      reelContext.lineWidth = 1;
-      reelContext.beginPath();
-      reelContext.moveTo(i * width * 4, 0);
-      reelContext.lineTo(i * width * 4, height * 4);
-      reelContext.stroke();
-    }
-    document.body.appendChild(reelCanvas);
-    reelCanvas.toBlob((blob) => {
-      setBlob(blob);
-    });
-    reelCanvas.remove();
-  };
-  const loadFrame = () => {
-    const frameObjects = loadFrameObjects();
   };
   const addAsset = () => {
     console.log("add asset");
   };
   return (
     <HudWrapper>
-      <Icon icon={faFloppyDisk} onClick={saveToFirebase} />
-      <Icon icon={faCloudArrowDown} onClick={loadFrame} />
-      <Icon icon={faBook} onClick={addAsset} />
+      {showLibrary && framesData.length > 0 ? (
+        <AssetLibrary framesdata={framesData} closer={toggleLibrary} />
+      ) : null}
+      <Icon
+        icon={faFloppyDisk}
+        onClick={(e) => {
+          putFrames({
+            frames: turnFramesToObject(),
+            name: title,
+            palette: palette,
+            config: config,
+          });
+        }}
+      />
+      <Icon icon={faCloudArrowDown} onClick={loadFrames} />
+      <Icon icon={faBook} onClick={toggleLibrary} />
     </HudWrapper>
   );
 };

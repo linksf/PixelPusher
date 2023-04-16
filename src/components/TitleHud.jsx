@@ -1,4 +1,4 @@
-import { useState, useContext, useRef } from "react";
+import { useState, useContext, useRef, useEffect } from "react";
 import { StateContext } from "../context/StateContext";
 import styled from "styled-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -58,10 +58,16 @@ const TitleHud = () => {
     const newMode = !editMode;
     setEditMode(newMode);
   };
+  const titleRef = useRef(null);
+  useEffect(() => {
+    if (editMode) {
+      titleRef.current.select();
+    }
+  }, [editMode, titleRef]);
   return (
     <Wrapper>
       {editMode ? (
-        <Input value={title} onChange={handleChange} />
+        <Input ref={titleRef} value={title} onChange={handleChange} />
       ) : (
         <Title>{title}</Title>
       )}

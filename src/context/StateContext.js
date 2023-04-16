@@ -31,7 +31,8 @@ export default function StateProvider({ children }) {
     const [activePanDirection, setActivePanDirection] = useState(null)
     const [title, setTitle] = useState("untitled")
  
-  const [blob, setBlob] = useState(null);
+    const [blob, setBlob] = useState(null);
+    
     const testBoundsX = ({xOff, yOff, scale, height, width, sMod}) => {
         const startingPixel = xOff * (scale + sMod)
         const endingPixel = width * (scale + sMod)
@@ -40,6 +41,7 @@ export default function StateProvider({ children }) {
         console.log((endingPixel - startingPixel) >= maxSpan)
         return (endingPixel - startingPixel) >= maxSpan
     }
+    
     const testBoundsY = ({xOff, yOff, scale, height, width, sMod}) => {
         const startingPixel = yOff * (scale + sMod)
         const endingPixel = height * (scale + sMod)
@@ -48,7 +50,16 @@ export default function StateProvider({ children }) {
         console.log((endingPixel - startingPixel) >= maxSpan)
         return (endingPixel - startingPixel) >= maxSpan
     }
+
+    const importFrames = (framesObject) => { 
+            setFrames(framesObject.frames)
+            setCurrentFrameIndex(0)
+            setTitle(framesObject.name)
+            setPalette(framesObject.palette)
+    }
+    
     const value = {
+        importFrames,
         title, setTitle,
         toolActive, setToolActive,
         tool, setTool,

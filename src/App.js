@@ -9,7 +9,7 @@ import AppHud from './components/AppHud';
 import FrameHud from './components/FrameHud';
 import TitleHud from './components/TitleHud';
 import FirebaseHud from './components/FirebaseHud';
-
+// import FirebaseSandBox from './firebaseSandbox';
 const { StateContext } = require('./context/StateContext');
 
 const PalletteWrapper = styled.div`
@@ -78,6 +78,7 @@ useEffect(()=> {
     <Wrapper 
     width={width * scale + 10}
     className="App">
+      {/* <FirebaseSandBox/> */}
       <Section bgColor="#232323" gridColumn="1/4">
         <AppHud/>
       </Section>
