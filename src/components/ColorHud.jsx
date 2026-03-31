@@ -12,6 +12,7 @@ import ColorPicker from "./ColorPicker";
 import PaletteColor from "./PaletteColor";
 import ToolPicker from "./ToolPicker";
 import { StateContext } from "../context/StateContext";
+import ZoomRange from "./ZoomRange";
 
 const HudWrapper = styled.div`
     display: flex;
@@ -20,9 +21,7 @@ const HudWrapper = styled.div`
     justify-content: center;
     height: 100%;
     width: 100%;
-    background-color: ${(props) =>
-      props.active ? props.bgColor : props.bgColor + "99"};
-    border: thin solid black;
+  
     box-sizing: border-box;
 //    opacity: ${(props) => (props.active ? 1 : 0.5)};
 `;
@@ -49,12 +48,11 @@ const ColorHud = ({
 
   return (
     <HudWrapper bgColor="#ffffff">
-      {palette.map((color, index) =>
-        index > 4 ? null : (
-          <PaletteColor key={index} color={color} index={index + 1} />
-        )
-      )}
+      {palette.map((color, index) => (
+        <PaletteColor key={index} color={color} index={index} />
+      ))}
       <ColorPicker color={palette[currentColorIndex]} />
+      <ZoomRange />
     </HudWrapper>
   );
 };

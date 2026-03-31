@@ -4,17 +4,41 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { StateContext } from "../context/StateContext";
 const ToolIcon = styled(FontAwesomeIcon)`
   font-size: 25px;
-  filter: drop-shadow(0 0 2px #000);
   transition: all 200ms ease;
   cursor: pointer;
   color: ${(props) =>
-    props.isactive ? props.palette[props.index] : "#ecf0f1"};
-  padding: 10px;
+    props.isactive ? props.palette[props.index] : "#6c8b93"};
+  position: relative;
+  cursor: pointer;
   &:hover {
-    transform: rotate(20deg);
+    transform: rotate(-45deg);
   }
 `;
-
+const Wrapper = styled.div`
+  display: grid;
+  place-items: center;
+  position: relative;
+  transition: all 200ms ease;
+  cursor: pointer;
+  padding: 0px;
+  margin: 0 5px;
+`;
+const SizeLabel = styled.p`
+  position: absolute;
+  font-size: 10px;
+  font-weight: 800;
+  font-family: "Roboto", sans-serif;
+  z-index: 2;
+  bottom: 0;
+  right: 0;
+  background-color: #454545;
+  color: #ecf0f1;
+  border-radius: 50%;
+  width: 15px;
+  height: 15px;
+  text-align: center;
+  line-height: 15px;
+`;
 const ToolPicker = ({ name, icon }) => {
   const {
     toolActive,
@@ -29,6 +53,7 @@ const ToolPicker = ({ name, icon }) => {
     setFrames,
     currentFrameIndex,
     setCurrentFrameIndex,
+    brushSize,
   } = useContext(StateContext);
 
   const handleClick = (e) => {
@@ -36,13 +61,18 @@ const ToolPicker = ({ name, icon }) => {
   };
 
   return (
-    <ToolIcon
-      icon={icon}
-      palette={palette}
-      index={currentColorIndex}
-      isactive={tool === name ? 1 : 0}
-      onClick={handleClick}
-    />
+    <Wrapper>
+      <ToolIcon
+        icon={icon}
+        palette={palette}
+        index={currentColorIndex}
+        isactive={tool === name ? 1 : 0}
+        onClick={handleClick}
+      />
+      {name === "draw" || name === "erase" ? (
+        <SizeLabel>{brushSize}</SizeLabel>
+      ) : null}
+    </Wrapper>
   );
 };
 export default ToolPicker;

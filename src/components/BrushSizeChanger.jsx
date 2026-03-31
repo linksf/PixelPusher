@@ -17,8 +17,7 @@ const Icon = styled(FontAwesomeIcon)`
   padding: 5px;
   cursor: pointer;
   position: relative;
-  color: #ecf0f1;
-  filter: drop-shadow(0 0 1px #000);
+  color: #6c8b93;
 `;
 const Lable = styled.label`
   color: #ecf0f1;
@@ -30,7 +29,7 @@ const Value = styled.p`
   text-shadow: 0 0 5px #000000;
 `;
 const Input = styled.input`
-  width: 75px;
+  width: 50px;
 `;
 const Input2 = styled.input`
   -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
@@ -105,7 +104,7 @@ const BrushSizeChanger = () => {
           onBlur={handleBlur}
           type="range"
           min="1"
-          max="10"
+          max="4"
           value={brushSize}
           onChange={handleChange}
         />

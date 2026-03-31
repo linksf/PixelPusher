@@ -1,11 +1,44 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
 import { StateContext } from "../context/StateContext";
+import { FirebaseContext } from "../context/FirebaseContext";
 import styled from "styled-components";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faArrowLeft,
+  faArrowRight,
+  faArrowDown,
+  faArrowUp,
+} from "@fortawesome/free-solid-svg-icons";
+import Prompt from "./Prompt";
 
 const Canvas = styled.canvas`
+  touch-action: none;
   cursor: crosshair;
   outline: thick solid #000000;
   z-index: 2;
+  position: relative;
+`;
+const Wrapper = styled.div`
+  position: relative;
+`;
+const Arrow = styled(FontAwesomeIcon)`
+  font-size: 20px;
+  color: #000000aa;
+  background-color: #22d82279;
+  border: thick solid #000000aa;
+  border-radius: 50%;
+  width: ${(props) => (props.orientation === "horizontal" ? 40 : 40)}px;
+  height: ${(props) => (props.orientation === "horizontal" ? 40 : 40)}px;
+  position: absolute;
+  top: ${(props) => props.top};
+  left: ${(props) => props.left};
+  bottom: ${(props) => props.bottom};
+  right: ${(props) => props.right};
+  display: ${(props) => (props.visible === "true" ? "block" : "none")};
+  cursor: pointer;
+  z-index: 3;
+  scale: ${(props) => (props.activated === "true" ? "1.1" : "1")};
+  transition: all 200ms ease-in-out;
 `;
 // class Pixel{
 //     constructor(col, row, colorIndex, scale=20){
@@ -19,6 +52,10 @@ const Canvas = styled.canvas`
 
 const Grid = (props) => {
   const {
+    title,
+    setTitle,
+    testBoundsX,
+    testBoundsY,
     toolActive,
     setToolActive,
     tool,
@@ -36,12 +73,25 @@ const Grid = (props) => {
     setBrushSize,
     showPreviousFrame,
     setShowPreviousFrame,
+    scaleMod,
+    undoData,
+    setUndoData,
+    undoAvailable,
+    setUndoAvailable,
+    xOffset,
+    setXOffset,
+    yOffset,
+    setYOffset,
+    activePanDirection,
+    setActivePanDirection,
   } = useContext(StateContext);
   const { width, height, scale } = config;
-  const [pixels, setPixels] = useState(Array(width * height).fill(0));
-  const [ctx, setCtx] = useState(null);
+  const { saveFrames, loadFrameObjects } = useContext(FirebaseContext);
+
   //const [palette, setPalette] = useState(
-  //      ["#aaaaaa", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", "#FFFF00", "#00FFFF", "#FF00FF"])
+  //      ["#aaaaaa", "#FFFFFF", "#FF0000", "#00FF00", "#0000FF", "#FFFF00",
+  const [showPrompt, setShowPrompt] = useState(false);
+
   const canvasRef = useRef(null);
 
   const getIndexFromColRow = (col, row) => {
@@ -73,27 +123,19 @@ const Grid = (props) => {
           : row % 2 === 0
           ? "#ccc"
           : "#aaa";
-      context.fillRect(col * scale, row * scale, scale, scale);
+      context.fillRect(
+        col * (scale + scaleMod) - xOffset * scale,
+        row * (scale + scaleMod) - yOffset * scale,
+        scale + scaleMod,
+        scale + scaleMod
+      );
       context.strokeStyle = "#000000";
-      context.strokeRect(col * scale, row * scale, scale, scale);
-    }
-  };
-
-  const mouseDown = (e) => {
-    setToolActive(true);
-    const canvas = canvasRef.current;
-    const context = canvas.getContext("2d");
-    const rect = canvas.getBoundingClientRect();
-    const col = Math.floor((e.clientX - rect.left) / scale);
-    const row = Math.floor((e.clientY - rect.top) / scale);
-    if (tool === "draw" || tool === "erase") {
-      draw(col, row);
-    } else if (tool === "fill") {
-      const targetColor =
-        frames[currentFrameIndex][getIndexFromColRow(col, row)];
-      fill(targetColor, col, row, [...frames[currentFrameIndex]]);
-    } else if (tool === "eyeDropper") {
-      eyeDropper(col, row);
+      context.strokeRect(
+        col * (scale + scaleMod) - xOffset * scale,
+        row * (scale + scaleMod) - yOffset * scale,
+        scale + scaleMod,
+        scale + scaleMod
+      );
     }
   };
 
@@ -109,14 +151,14 @@ const Grid = (props) => {
           tool === "draw"
             ? currentColorIndex
             : tool === "erase"
-            ? 0
+            ? -1
             : tempFrame[pixelIndex];
       }
     }
     const tempFrames = [...frames];
     tempFrames[currentFrameIndex] = tempFrame;
     setFrames(tempFrames);
-    printPixels();
+    //printPixels();
     // context.fillStyle = palette[currentColorIndex];
     // context.fillRect(col * scale, row * scale, scale, scale);
     // context.strokeStyle = "#000000";
@@ -126,12 +168,8 @@ const Grid = (props) => {
   const fill = (targetColor, col, row, tempFrame, indexes) => {
     if (targetColor === currentColorIndex) return;
     if (indexes === undefined) indexes = new Set();
+    if (tempFrame === undefined) tempFrame = [...frames[currentFrameIndex]];
     if (indexes.has(getIndexFromColRow(col, row))) return;
-    console.log(
-      `filling ${targetColor} at ${col}, ${row} with indexes ${Array.from(
-        indexes.values()
-      )}`
-    );
     const orthos = [
       [0, 1],
       [0, -1],
@@ -167,27 +205,55 @@ const Grid = (props) => {
     tempFrames[currentFrameIndex] = tempFrame;
     setFrames(tempFrames);
   };
+
+  const mouseDown = (e) => {
+    saveDataForUndo();
+    setToolActive(true);
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    const rect = canvas.getBoundingClientRect();
+    const col =
+      Math.floor((e.clientX - rect.left) / (scale + scaleMod)) + xOffset;
+    const row =
+      Math.floor((e.clientY - rect.top) / (scale + scaleMod)) + yOffset;
+    console.log(
+      Math.floor((e.clientX - rect.left) / (scale + scaleMod) + xOffset)
+    );
+
+    inputDown(col, row);
+  };
+
   const mouseUp = (e) => {
     setToolActive(false);
   };
 
   const mouseMove = (e) => {
+    // printFrame();
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const col = Math.min(
+      width,
+      Math.max(0, Math.floor((e.clientX - rect.left) / (scale + scaleMod))) +
+        xOffset
+    );
+    const row = Math.min(
+      height,
+      Math.max(0, Math.floor((e.clientY - rect.top) / (scale + scaleMod))) +
+        yOffset
+    );
     if (toolActive) {
-      const canvas = canvasRef.current;
-      const rect = canvas.getBoundingClientRect();
-      const col = Math.min(
-        width,
-        Math.max(0, Math.floor((e.clientX - rect.left) / scale))
-      );
-      const row = Math.min(
-        height,
-        Math.max(0, Math.floor((e.clientY - rect.top) / scale))
-      );
-      if (tool === "draw") {
+      if (tool === "draw" || tool === "erase") {
         draw(col, row);
-      } else if (tool === "erase") {
-        erase(col, row);
       }
+      // } else if (tool === "draw" || tool === "erase") {
+      //   const context = canvas.getContext("2d");
+      //   context.strokeStyle = palette[currentColorIndex];
+      //   context.strokeRect(
+      //     col * (scale + scaleMod)+(xOffset*scale),
+      //     row * (scale + scaleMod)+(yOffset*scale),
+      //     brushSize * (scale + scaleMod),
+      //     brushSize * (scale + scaleMod)
+      //   );
     }
   };
 
@@ -217,18 +283,22 @@ const Grid = (props) => {
         : row % 2 === 0
         ? "#ccc"
         : "#aaa";
-    context.fillRect(col * scale, row * scale, scale, scale);
+    context.fillRect(
+      col * (scale + scaleMod) - xOffset * scale,
+      row * (scale + scaleMod) - yOffset * scale,
+      scale + scaleMod,
+      scale + scaleMod
+    );
     context.strokeStyle = "#000000";
-    context.strokeRect(col * scale, row * scale, scale, scale);
+    context.strokeRect(
+      col * (scale + scaleMod) - xOffset * scale,
+      row * (scale + scaleMod) - yOffset * scale,
+      scale + scaleMod,
+      scale + scaleMod
+    );
   };
 
-  const touchStart = (e) => {
-    e.preventDefault();
-    setToolActive(true);
-    const canvas = canvasRef.current;
-    const rect = canvas.getBoundingClientRect();
-    const col = Math.floor((e.touches[0].clientX - rect.left) / scale);
-    const row = Math.floor((e.touches[0].clientY - rect.top) / scale);
+  const inputDown = (col, row) => {
     if (tool === "draw" || tool === "erase") {
       draw(col, row);
     } else if (tool === "fill") {
@@ -240,23 +310,44 @@ const Grid = (props) => {
     }
   };
 
+  const touchStart = (e) => {
+    saveDataForUndo();
+    setToolActive(true);
+    const canvas = canvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+    const col = Math.floor(
+      (e.touches[0].clientX - rect.left) / (scale + scaleMod)
+    );
+    const row = Math.floor(
+      (e.touches[0].clientY - rect.top) / (scale + scaleMod)
+    );
+    inputDown(col, row);
+  };
+
   const touchMove = (e) => {
-    e.preventDefault();
+    // e.stopPropagation();
     if (toolActive) {
       const canvas = canvasRef.current;
       const rect = canvas.getBoundingClientRect();
-      const col = Math.floor((e.touches[0].clientX - rect.left) / scale);
-      const row = Math.floor((e.touches[0].clientY - rect.top) / scale);
+      const col = Math.floor(
+        (e.touches[0].clientX - rect.left) / (scale + scaleMod)
+      );
+      const row = Math.floor(
+        (e.touches[0].clientY - rect.top) / (scale + scaleMod)
+      );
+      console.log(col, row);
       if (tool === "draw" || tool === "erase") {
         draw(col, row);
-      } else if (tool === "fill") {
-        const targetColor =
-          frames[currentFrameIndex][getIndexFromColRow(col, row)];
-        fill(targetColor, col, row);
-      } else if (tool === "eyedropper") {
-        eyeDropper(col, row);
       }
+      // else if (tool === "fill") {
+      //   const targetColor =
+      //     frames[currentFrameIndex][getIndexFromColRow(col, row)];
+      //   fill(targetColor, col, row);
+      // } else if (tool === "eyedropper") {
+      //   eyeDropper(col, row);
+      // }
     }
+    // printFrame();
   };
 
   const touchEnd = (e) => {
@@ -264,7 +355,22 @@ const Grid = (props) => {
     setToolActive(false);
   };
 
-  useEffect(() => {
+  const saveDataForUndo = () => {
+    const tempUndoAvailable = [...undoAvailable];
+    tempUndoAvailable[currentFrameIndex] = 1;
+    setUndoAvailable(tempUndoAvailable);
+    if (undoData.length === 0) {
+      for (let i = 0; i < frames.length; i++) {
+        undoData.push([...frames[i]]);
+      }
+    }
+    const tempData = [...undoData];
+    const tempFrame = [...frames[currentFrameIndex]];
+    tempData[currentFrameIndex] = tempFrame;
+    setUndoData(tempData);
+  };
+
+  const printFrame = () => {
     const canvas = canvasRef.current;
     const context = canvas.getContext("2d");
     context.clearRect(0, 0, canvas.width, canvas.height);
@@ -275,22 +381,10 @@ const Grid = (props) => {
     }
     for (let i = 0; i < frame.length; i++) {
       const { col, row } = getColRowFromIndex(i);
-      //     context.fillStyle =
-      //       prevFrame[i] !== 0
-      //         ? palette[prevFrame[i]] + "55"
-      //         : col % 2 === 0
-      //         ? row % 2 === 0
-      //           ? "#aaa"
-      //           : "#ccc"
-      //         : row % 2 === 0
-      //         ? "#ccc"
-      //         : "#aaa";
-      //     context.fillRect(col * scale, row * scale, scale, scale);
-      //   }
       let fillColor;
-      if (frame[i] !== 0) {
+      if (frame[i] >= 0) {
         fillColor = palette[frame[i]];
-      } else if (prevFrame && prevFrame[i] !== 0) {
+      } else if (prevFrame && prevFrame[i] >= 0) {
         fillColor = palette[prevFrame[i]] + "55";
       } else {
         fillColor =
@@ -304,41 +398,306 @@ const Grid = (props) => {
       }
 
       context.fillStyle = fillColor;
-      context.fillRect(col * scale, row * scale, scale, scale);
+      context.fillRect(
+        col * (scale + scaleMod) - xOffset * (scale + scaleMod),
+        row * (scale + scaleMod) - yOffset * (scale + scaleMod),
+        scale + scaleMod,
+        scale + scaleMod
+      );
+      context.font = "12px Arial";
+      context.fillStyle = "#000000";
+      if (row % 8 == 0 && col !== 0 && col % 8 !== 0 && col % 2 == 0) {
+        context.fillText(
+          `${col}`,
+          col * (scale + scaleMod) - xOffset * (scale + scaleMod) + 1,
+          row * (scale + scaleMod) - yOffset * (scale + scaleMod) + scale - 2,
+          14
+        );
+      }
+      if (col % 8 == 0 && row !== 0 && row % 8 !== 0 && row % 2 == 0) {
+        context.fillText(
+          `${row}`,
+          col * (scale + scaleMod) - xOffset * (scale + scaleMod) + 1,
+          row * (scale + scaleMod) - yOffset * (scale + scaleMod) + scale - 2,
+          14
+        );
+      }
+
+      // context.font = "12px Arial";
+      // context.fillStyle = "#000000";
+
+      // context.fillText(
+      //   `${col},${row}`,
+      //   col * (scale + scaleMod) - xOffset * scale,
+      //   row * (scale + scaleMod) - yOffset * scale + scale,
+      //   19
+      // );
       context.strokeStyle = "#000000";
-      context.strokeRect(col * scale, row * scale, scale, scale);
+      context.strokeRect(
+        col * (scale + scaleMod) - xOffset * (scale + scaleMod),
+        row * (scale + scaleMod) - yOffset * (scale + scaleMod),
+        scale + scaleMod,
+        scale + scaleMod
+      );
       for (let i = 0; i < width; i += 4) {
         context.strokeStyle = "#000000";
         context.lineWidth = 2;
         context.beginPath();
-        context.moveTo(i * scale, 0);
-        context.lineTo(i * scale, height * scale);
+        context.moveTo(
+          i * (scale + scaleMod) - xOffset * (scale + scaleMod),
+          0
+        );
+        context.lineTo(
+          i * (scale + scaleMod) - xOffset * (scale + scaleMod),
+          height * (scale + scaleMod)
+        );
         context.stroke();
         context.beginPath();
-        context.moveTo(0, i * scale);
-        context.lineTo(width * scale, i * scale);
+        context.moveTo(
+          0,
+          i * (scale + scaleMod) - yOffset * (scale + scaleMod)
+        );
+        context.lineTo(
+          width * (scale + scaleMod) - yOffset * (scale + scaleMod),
+          i * (scale + scaleMod) - yOffset * (scale + scaleMod)
+        );
         context.stroke();
-
-        context.strokeRect(0, 0, width * scale, height * scale);
+        context.strokeRect(
+          0,
+          0,
+          width * (scale + scaleMod),
+          height * (scale + scaleMod)
+        );
         context.lineWidth = 1;
       }
     }
-  }, [currentFrameIndex, frames, palette, scale]);
+  };
+  const getImgURL = () => {
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    // const imgData = context.getImageData(0, 0, canvas.width, canvas.height);
+    // const data = imgData.data;
+    const imgURL = canvas.toDataURL("image/png");
+    console.log(imgURL);
+    return imgURL;
+  };
+  useEffect(() => {
+    printFrame();
+  }, [currentFrameIndex, frames, palette, scale, scaleMod, xOffset, yOffset]);
 
+  // const moveUp = (e) => {
+  //   console.log(`
+  //   new yOffset: ${Math.max(0, yOffset - 1)}
+  //   xOffset: ${xOffset}
+  //   scale: ${scale}
+  //   scaleMod: ${scaleMod}
+  //   yEnd: ${width * (scale + scaleMod) - yOffset * scale}
+  //   xEnd: ${height * (scale + scaleMod) - xOffset * scale}`);
+  //   setYOffset(Math.max(0, yOffset - 1));
+  // };
+
+  // const moveDown = (e) => {
+  //   console.log(`
+  //   new yOffset: ${Math.min(height / 2, yOffset + 1)}
+  //   xOffset: ${xOffset}
+  //   scale: ${scale}
+  //   scaleMod: ${scaleMod}
+  //   yEnd: ${width * (scale + scaleMod) - yOffset * scale}
+  //   xEnd: ${height * (scale + scaleMod) - xOffset * scale}`);
+  //   setYOffset(yOffset + 1);
+  // };
+  // const moveLeft = (e) => {
+  //   console.log(`
+  //   new xOffset: ${Math.max(0, xOffset - 1)}
+  //   yOffset: ${yOffset}
+  //   scale: ${scale}
+  //   scaleMod: ${scaleMod}
+  //   yEnd: ${width * (scale + scaleMod) - yOffset * scale}
+  //   xEnd: ${height * (scale + scaleMod) - (xOffset - 1) * scale}`);
+  //   setXOffset(Math.max(0, xOffset - 1));
+  // };
+  // const moveRight = (e) => {
+  //   console.log(`
+  //   new xOffset: ${xOffset + 1}
+  //   yOffset: ${yOffset}
+  //   scale: ${scale}
+  //   scaleMod: ${scaleMod}
+  //   yEnd: ${width * (scale + scaleMod) - yOffset * scale}
+  //   xEnd: ${height * (scale + scaleMod) - (xOffset + 1) * scale}`);
+  //   setXOffset(xOffset + 1);
+  // };
+  const defaultData = {
+    xOff: xOffset,
+    yOff: yOffset,
+    scale: scale,
+    height: height,
+    width: width,
+    sMod: scaleMod,
+  };
+
+  const move = (direction) => {
+    console.log(direction);
+    setActivePanDirection(direction);
+    switch (direction) {
+      case "right":
+        if (xOffset >= 20) {
+          setActivePanDirection(null);
+          return;
+        }
+        if (!testBoundsX({ ...defaultData, xOff: xOffset + 1 })) {
+          setActivePanDirection(null);
+          return;
+        }
+        setXOffset(xOffset + 1);
+        break;
+      case "left":
+        if (xOffset <= 0) {
+          setActivePanDirection(null);
+          return;
+        }
+        if (!testBoundsX({ ...defaultData, xOff: xOffset - 1 })) {
+          setActivePanDirection(null);
+          return;
+        }
+        setXOffset(xOffset - 1);
+        break;
+      case "up":
+        if (yOffset <= 0) {
+          setActivePanDirection(null);
+          return;
+        }
+        if (!testBoundsY({ ...defaultData, yOff: yOffset - 1 })) {
+          setActivePanDirection(null);
+          return;
+        }
+        setYOffset(yOffset - 1);
+        break;
+      case "down":
+        if (yOffset >= 20) {
+          setActivePanDirection(null);
+          return;
+        }
+        if (!testBoundsY({ ...defaultData, yOff: yOffset + 1 })) {
+          setActivePanDirection(null);
+          return;
+        }
+        setYOffset(yOffset + 1);
+        break;
+      default:
+        break;
+    }
+  };
+  const endPan = () => {
+    setActivePanDirection(null);
+  };
+  const hexToRgb = (hex) => {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result
+      ? {
+          r: parseInt(result[1], 16),
+          g: parseInt(result[2], 16),
+          b: parseInt(result[3], 16),
+        }
+      : null;
+  };
+
+  // const getImageOfFrames = (frames, palette) => {
+  //   const rgbFrames = frames.map((frame) =>
+  //     frame.reduce((acc, colorIndex) => {
+  //       if (colorIndex >= 0) {
+  //         const { r, g, b } = hexToRgb(palette[colorIndex]);
+  //         return acc.concat([r, g, b, 255]);
+  //       } else {
+  //         return acc.concat([0, 0, 0, 0]);
+  //       }
+  //     }, [])
+  //   );
+  //   console.table(rgbFrames);
+  //   const frameWidth = frames[0][0].length;
+  //   const frameHeight = frames[0].length;
+  //   const imageWidth = frames.length * frameWidth;
+  //   const imageHeight = frameHeight;
+  //   const imageCanvas = document.createElement("canvas");
+  //   imageCanvas.width = imageWidth;
+  //   imageCanvas.height = imageHeight;
+  //   imageCanvas.style.position = "absolute";
+  //   const imageCxt = imageCanvas.getContext("2d");
+  //   for (const [i, frame] of Object.entries(rgbFrames)) {
+  //     for (let j = 0; j < 24 * 24 * 4; j++) {
+  //       imageCxt.fillStyle = `rgba(${frame[j]},${frame[j + 1]},${
+  //         frame[j + 2]
+  //       },${frame[j + 3]})`;
+  //       imageCxt.fillRect(j, j, 1, 1);
+  //     }
+  //     const imgData = new ImageData(rgbFrame, 24);
+  //     imageCanvas.getContext("2d").putImageData(imgData, i * frameWidth, 0);
+  //   }
+  //   console.log(imageCanvas.toDataURL("image/png"));
+  // };
   return (
-    <Canvas
-      onTouchStart={touchStart}
-      onTouchMove={touchMove}
-      onTouchEnd={touchEnd}
-      onMouseDown={mouseDown}
-      onMouseOut={mouseOut}
-      onMouseUp={mouseUp}
-      onMouseMove={mouseMove}
-      ref={canvasRef}
-      width={width * scale}
-      height={height * scale}
-      id="canvas"
-    ></Canvas>
+    <Wrapper>
+      <Arrow
+        activated={`${activePanDirection === "up"}`}
+        icon={faArrowUp}
+        top={"0"}
+        left={"calc(50% - 20px)"}
+        visible={`${scaleMod > 0 && yOffset > 0}`}
+        onMouseDown={(e) => move("up")}
+        orientation="horizontal"
+        onMouseUp={endPan}
+        onTouchStart={(e) => move("up")}
+        onTouchEnd={endPan}
+      />
+      <Arrow
+        activated={`${activePanDirection === "down"}`}
+        icon={faArrowDown}
+        bottom={"0"}
+        left={"calc(50% - 20px)"}
+        visible={`${scaleMod > 0}`}
+        onMouseDown={(e) => move("down")}
+        onMouseUp={endPan}
+        onTouchStart={(e) => move("down")}
+        onTouchEnd={endPan}
+        orientation="horizontal"
+      />
+      <Arrow
+        activated={`${activePanDirection === "left"}`}
+        icon={faArrowLeft}
+        top={"calc(50% - 20px)"}
+        left={"0"}
+        visible={`${scaleMod > 0 && xOffset > 0}`}
+        onMouseDown={(e) => move("left")}
+        onMouseUp={endPan}
+        onTouchStart={(e) => move("left")}
+        onTouchEnd={endPan}
+        orientation="vertical"
+      />
+      <Arrow
+        activated={`${activePanDirection === "right"}`}
+        icon={faArrowRight}
+        top={"calc(50% - 20px)"}
+        right={"0"}
+        visible={`${scaleMod > 0}`}
+        onMouseDown={(e) => move("right")}
+        onMouseUp={endPan}
+        onTouchStart={(e) => move("right")}
+        onTouchEnd={endPan}
+        orientation="vertical"
+      />
+      <Canvas
+        onTouchStart={touchStart}
+        onTouchMove={touchMove}
+        onTouchEnd={touchEnd}
+        onMouseDown={mouseDown}
+        onMouseOut={mouseOut}
+        onMouseUp={mouseUp}
+        onMouseMove={mouseMove}
+        ref={canvasRef}
+        width={width * scale}
+        height={height * scale}
+        id="canvas"
+      ></Canvas>
+    </Wrapper>
   );
 };
 export default Grid;

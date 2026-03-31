@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import styled from "styled-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlusCircle } from "@fortawesome/free-solid-svg-icons";
+import { faPlusCircle, faCopy } from "@fortawesome/free-solid-svg-icons";
 import { StateContext } from "../context/StateContext";
 
 const HudWrapper = styled.div`
@@ -58,8 +58,9 @@ const FrameHud = () => {
   };
 
   const addFrame = () => {
+    console.log(JSON.stringify(frames));
     const newFrames = [...frames];
-    newFrames.push(new Array(config.width * config.height).fill(0));
+    newFrames.push(new Array(config.width * config.height).fill(-1));
     setFrames(newFrames);
     setCurrentFrameIndex(newFrames.length - 1);
   };

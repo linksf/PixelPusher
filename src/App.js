@@ -1,20 +1,22 @@
-import {useState, useContext} from 'react';
+import {useState, useContext, useEffect} from 'react';
 import './App.css';
 import Grid from './components/Grid';
 import PaletteColor from './components/PaletteColor';
 import styled from 'styled-components';
 import ColorHud from './components/ColorHud';
 import ToolHud from './components/ToolHud';
-import TitleHud from './components/TitleHud';
+import AppHud from './components/AppHud';
 import FrameHud from './components/FrameHud';
-
+import TitleHud from './components/TitleHud';
+import FirebaseHud from './components/FirebaseHud';
+// import FirebaseSandBox from './firebaseSandbox';
 const { StateContext } = require('./context/StateContext');
 
 const PalletteWrapper = styled.div`
   display: flex;
   margin: 10px;
   justify-content: space-evenly;
-  align-items: stretch;
+  align-items: center;
   flex-wrap: wrap;
   width: 80%;
   border: thin black solid;
@@ -29,7 +31,7 @@ const PaletteLable = styled.h3`
   width: 100%;
 `
 const Section = styled.div`
-width: 100%;
+width: 100vw;
 display: flex;
 flex-direction: column;
 justify-content: center;
@@ -40,16 +42,20 @@ grid-column: 1/2;
 const AppWrapper = styled.div`
 width: 100vw;
 height: 100vh;
-display: grid;
-place-items: center;
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: flex-start;
+ touch-action: none;
 `
 const Wrapper = styled.div`
   display: grid;
-grid-template-columns: 1fr;
-grid-template-rows: 50px 50px 1fr 50px auto;
-width: ${props => props.width}px;
-
+  grid-template-columns: 1fr;
+  grid-template-rows: 50px 50px 35px 1fr 50px 50px auto;
+  width: 100vw;
 `
+// width: ${props => props.width}px;
+
 
 function App() {
 const {
@@ -58,32 +64,43 @@ const {
         currentColorIndex, setCurrentColorIndex,
         palette, setPalette,
         frames, setFrames,
-        currentFrameIndex, setCurrentFrameIndex, config
+        currentFrameIndex, setCurrentFrameIndex, config, setConfig, setScaleMod, scaleMod
     } = useContext(StateContext)
 
 const {width, height, scale} = config
-
+useEffect(()=> {
+  const newScale = window.innerWidth < 480 ? 15 : 20
+  setConfig({...config, scale: newScale })
+}, [])
 
   return (
     <AppWrapper>
     <Wrapper 
     width={width * scale + 10}
     className="App">
+      {/* <FirebaseSandBox/> */}
       <Section bgColor="#232323" gridColumn="1/4">
-        <TitleHud/>
+        <AppHud/>
       </Section>
-      <Section bgColor="ecf0f1" gridColumn="1/2">
+      <Section bgColor="#ecf0f1" gridColumn="1/2">
         <ToolHud/>      
+      </Section>
+      <Section bgColor="#ecf0f1" gridColumn="2/3">
+        <TitleHud />
       </Section>
       <Section bgColor="#ecf0f1" gridColumn="2/3">
         <Grid />
       </Section>
-      <Section bgColor="#232323" gridColumn="3/4">
+      <Section bgColor="#ecf0f1" gridColumn="3/4">
         <ColorHud/>      
       </Section>
       <Section bgColor="#232323" gridColumn="1/4">
       <FrameHud/>
         </Section>
+      <Section bgColor="#232323" gridColumn="1/4">
+      <FirebaseHud/>
+        </Section>
+       
     </Wrapper>
       </AppWrapper>
   );

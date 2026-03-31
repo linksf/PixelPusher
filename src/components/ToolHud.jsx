@@ -6,10 +6,19 @@ import {
   faEraser,
   faFill,
   faEyeDropper,
+  faUndo,
+  faBroom,
 } from "@fortawesome/free-solid-svg-icons";
 import ToolPicker from "./ToolPicker";
 import { StateContext } from "../context/StateContext";
 import BrushSizeChanger from "./BrushSizeChanger";
+
+const Icon = styled(FontAwesomeIcon)`
+  color: ${(props) => (props.available ? "palevioletred" : "#686868")};
+  font-size: 25px;
+  margin: 0 5px;
+  cursor: pointer;
+`;
 const HudWrapper = styled.div`
   display: flex;
   flex-direction: row;
@@ -22,7 +31,18 @@ const HudWrapper = styled.div`
 `;
 
 const ToolHud = ({}) => {
-  const { toolActive } = useContext(StateContext);
+  const {
+    toolActive,
+    undoData,
+    frames,
+    currentFrameIndex,
+    setFrames,
+    undoAvailable,
+    setUndoAvailable,
+    setUndoData,
+    config,
+  } = useContext(StateContext);
+  const { width, height } = config;
 
   const tools = [
     { name: "draw", icon: faPaintBrush },
@@ -33,9 +53,39 @@ const ToolHud = ({}) => {
   const toolPickers = tools.map((tool) => (
     <ToolPicker key={tool.name} name={tool.name} icon={tool.icon} />
   ));
+  const clearFrame = () => {
+    const tempUndoAvailable = [...undoAvailable];
+    tempUndoAvailable[currentFrameIndex] = 1;
+    setUndoAvailable(tempUndoAvailable);
+    const tempUndoData = [...undoData];
+    tempUndoData[currentFrameIndex] = [...frames[currentFrameIndex]];
+    setUndoData(tempUndoData);
+    const tempFrames = [...frames];
+    tempFrames[currentFrameIndex] = new Array(
+      config.width * config.height
+    ).fill(-1);
+    setFrames(tempFrames);
+  };
+  const undo = () => {
+    const newFrame = [...undoData[currentFrameIndex]];
+    const tempFrames = [...frames];
+    tempFrames[currentFrameIndex] = newFrame;
+    setFrames(tempFrames);
+    const tempUndoAvailable = [...undoAvailable];
+    tempUndoAvailable[currentFrameIndex] = 0;
+    setUndoAvailable(tempUndoAvailable);
+  };
+
   return (
     <HudWrapper bgColor="#ffffff" active={toolActive}>
+      <Icon
+        icon={faUndo}
+        onClick={undo}
+        available={undoAvailable[currentFrameIndex]}
+      />
+
       {toolPickers}
+      <Icon icon={faBroom} available={1} onClick={clearFrame} />
       <BrushSizeChanger />
     </HudWrapper>
   );
